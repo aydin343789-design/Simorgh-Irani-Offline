@@ -1,0 +1,16 @@
+{
+  "name": "simorgh-irani-translator",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "sync": "npx cap sync android",
+    "build:android": "cd android && gradle --no-daemon assembleDebug"
+  },
+  "dependencies": {
+    "@capacitor/core": "8.5.2",
+    "@capacitor/android": "8.5.2"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "8.5.2"
+  }
+}

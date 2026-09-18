@@ -1,0 +1,43 @@
+#!/usr/bin/env sh
+set -eu
+
+APP_HOME=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+
+if command -v gradle >/dev/null 2>&1; then
+    exec gradle "$@"
+fi
+
+if [ -n "${GRADLE_USER_HOME:-}" ]; then
+    CACHE_HOME="$GRADLE_USER_HOME"
+elif [ -n "${HOME:-}" ]; then
+    CACHE_HOME="$HOME/.gradle"
+else
+    CACHE_HOME="$APP_HOME/.gradle"
+fi
+
+VERSION="8.13"
+DIST_DIR="$CACHE_HOME/simorgh-wrapper/gradle-$VERSION"
+ZIP="$CACHE_HOME/simorgh-wrapper/gradle-$VERSION-bin.zip"
+URL="https://services.gradle.org/distributions/gradle-$VERSION-bin.zip"
+
+if [ ! -x "$DIST_DIR/bin/gradle" ]; then
+    mkdir -p "$(dirname "$ZIP")"
+    if command -v curl >/dev/null 2>&1; then
+        curl -fL --retry 3 --connect-timeout 15 -o "$ZIP" "$URL"
+    elif command -v wget >/dev/null 2>&1; then
+        wget -O "$ZIP" "$URL"
+    else
+        echo "Gradle 8.13 is not installed and curl/wget is unavailable." >&2
+        exit 1
+    fi
+    rm -rf "$DIST_DIR"
+    mkdir -p "$(dirname "$DIST_DIR")"
+    if command -v unzip >/dev/null 2>&1; then
+        unzip -q "$ZIP" -d "$(dirname "$DIST_DIR")"
+    else
+        echo "unzip is required to install Gradle 8.13." >&2
+        exit 1
+    fi
+fi
+
+exec "$DIST_DIR/bin/gradle" "$@"
