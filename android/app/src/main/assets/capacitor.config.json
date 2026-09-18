@@ -1,8 +1,8 @@
 {
-  "appId": "ir.simorgh.irani",
-  "appName": "SIMURGH",
-  "webDir": "www",
-  "android": {
-    "backgroundColor": "#0b1020"
-  }
+	"appId": "ir.simorgh.irani",
+	"appName": "SIMURGH",
+	"webDir": "www",
+	"android": {
+		"backgroundColor": "#0b1020"
+	}
 }

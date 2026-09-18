@@ -28,10 +28,8 @@ jobs:
         with:
           log-accepted-android-sdk-licenses: false
 
-      - name: Accept Android SDK licenses
-        run: |
-          yes | sdkmanager --licenses || true
-          sdkmanager "platform-tools" "platforms;android-34" "build-tools;34.0.0" || true
+      - name: Accept Android licenses
+        run: yes | sdkmanager --licenses || true
 
       - name: Install dependencies
         run: npm install
@@ -43,7 +41,7 @@ jobs:
         run: |
           cd android
           chmod +x gradlew
-          ./gradlew assembleDebug --no-daemon --stacktrace
+          ./gradlew assembleDebug --no-daemon
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
@@ -51,4 +49,3 @@ jobs:
         with:
           name: Simorgh-APK
           path: android/app/build/outputs/apk/debug/*.apk
-          if-no-files-found: warn
