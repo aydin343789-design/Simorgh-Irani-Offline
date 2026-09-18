@@ -15,34 +15,31 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: '20'
 
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
-          java-version: '17'
+          java-version: '21'
 
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Install Cordova
-        run: npm install -g cordova
+      - name: Install dependencies
+        run: npm install
 
-      - name: Create Cordova project
-        run: |
-          cordova create simorgh com.simorgh.iranioffline "Simorgh Irani Offline"
-          cp -r www/* simorgh/www/ || true
-          cd simorgh
-          cordova platform add android
+      - name: Sync Capacitor
+        run: npx cap sync android
 
       - name: Build APK
         run: |
-          cd simorgh
-          cordova build android
+          cd android
+          chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: Simorgh-APK
-          path: simorgh/platforms/android/app/build/outputs/apk/debug/*.apk
+          path: android/app/build/outputs/apk/debug/*.apk
