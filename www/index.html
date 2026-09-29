@@ -283,33 +283,6 @@ body{display:flex;flex-direction:column}
 .profile-photo-btn.primary{background:var(--primary);color:#fff;border-color:var(--primary)}
 @media(max-width:480px){.flashcard{height:290px}.card-en{font-size:24px}.card-fa{font-size:20px}.card-emoji{font-size:52px}.quiz-word{font-size:22px}.lessons-grid{grid-template-columns:repeat(2,1fr)}.header-title h1{font-size:13px}.header-title p{font-size:9px}.quiz-types{grid-template-columns:1fr 1fr}}
 
-/* TRANSLATOR */
-.translator-hero{background:linear-gradient(135deg,rgba(14,165,233,.14),rgba(99,102,241,.12));border:1px solid rgba(14,165,233,.22);border-radius:22px;padding:18px;margin-bottom:14px}
-.translator-hero h2{font-size:20px;font-weight:900;margin-bottom:6px}
-.translator-hero p{font-size:12px;color:var(--text-light);line-height:1.8}
-.translator-status{display:flex;align-items:center;gap:8px;margin-top:12px;font-size:11px;color:var(--text-light)}
-.translator-dot{width:9px;height:9px;border-radius:50%;background:var(--warning);box-shadow:0 0 0 4px rgba(245,158,11,.12)}
-.translator-dot.ready{background:var(--success);box-shadow:0 0 0 4px rgba(16,185,129,.12)}
-.translator-dot.busy{background:var(--primary);box-shadow:0 0 0 4px rgba(14,165,233,.12)}
-.translator-controls{display:grid;grid-template-columns:1fr 54px 1fr;gap:8px;align-items:center;margin-bottom:12px}
-.translator-lang{width:100%;padding:12px;border:2px solid var(--border);background:var(--card);color:var(--text);border-radius:13px;font-family:inherit;font-weight:800;outline:none}
-.translator-swap{height:46px;border:0;border-radius:13px;background:var(--primary);color:#fff;font-size:20px;cursor:pointer}
-.translator-panel{background:var(--card);border:1px solid var(--border);border-radius:18px;overflow:hidden;box-shadow:var(--shadow);margin-bottom:12px}
-.translator-label{display:flex;align-items:center;justify-content:space-between;padding:10px 13px;border-bottom:1px solid var(--border);font-size:12px;font-weight:800;color:var(--text-light)}
-.translator-textarea{width:100%;min-height:145px;resize:vertical;border:0;outline:none;background:transparent;color:var(--text);font-family:inherit;font-size:16px;line-height:1.9;padding:14px;direction:auto}
-.translator-output{min-height:145px;padding:14px;font-size:16px;line-height:2;white-space:pre-wrap;word-break:break-word;color:var(--text);direction:auto}
-.translator-output.empty{color:var(--text-light);font-size:13px}
-.translator-actions{display:grid;grid-template-columns:1fr 1fr;gap:9px}
-.translator-action{border:0;border-radius:14px;padding:13px;font-family:inherit;font-weight:800;cursor:pointer}
-.translator-action.primary{background:linear-gradient(135deg,var(--primary),var(--primary-dark));color:#fff}
-.translator-action.secondary{background:var(--bg);color:var(--text);border:1px solid var(--border)}
-.translator-history{margin-top:15px}
-.translator-history h3{font-size:14px;margin-bottom:8px}
-.translator-history-item{padding:11px 12px;background:var(--card);border:1px solid var(--border);border-radius:12px;margin-bottom:7px;cursor:pointer}
-.translator-history-item .src{font-size:12px;color:var(--text-light);margin-bottom:4px}
-.translator-history-item .dst{font-size:14px;font-weight:700;line-height:1.7}
-.translator-pack{margin-top:12px;padding:12px;border-radius:14px;background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.22);font-size:11px;color:var(--text-light);line-height:1.8}
-@media(max-width:480px){.translator-controls{grid-template-columns:1fr 46px 1fr}.translator-textarea,.translator-output{min-height:130px}}
 .conversation-hero{background:linear-gradient(135deg,#0f766e,#0891b2);color:#fff;border-radius:var(--radius);padding:18px;margin-bottom:14px}
 .conversation-hero h2{font-size:18px;margin-bottom:6px}.conversation-hero p{font-size:12px;line-height:1.8;opacity:.95}
 .conversation-topics{display:flex;gap:8px;overflow-x:auto;padding:2px 0 12px;scrollbar-width:none}
@@ -362,7 +335,7 @@ body{display:flex;flex-direction:column}
 <ul class="menu-list">
 <li onclick="editProfile()"><span class="mi">✏️</span> ویرایش پروفایل</li>
 <li onclick="showSmartReview()"><span class="mi">🗂️</span> مرور هوشمند (لایتنر)</li>
-<li onclick="showTranslator()"><span class="mi">🌐</span> مترجم آفلاین فارسی ↔ انگلیسی</li>
+
 <li onclick="showConversation()"><span class="mi">🗣️</span> تمرین مکالمه آفلاین</li>
 </ul>
 </div>
@@ -534,46 +507,7 @@ body{display:flex;flex-direction:column}
 <div id="conversationLines"></div>
 <div class="offline-note">🔒 مدل‌های صدا فقط یک‌بار در اولین اجرا دانلود می‌شوند؛ بعد از نصب، متن به Browser، Android TTS یا API ارسال نمی‌شود.</div>
 </div>
-<div class="screen" id="translatorScreen">
-<button class="back-btn" onclick="showScreen('homeScreen','right')">→ بازگشت</button>
-<div class="translator-hero">
-  <h2>🌐 مترجم فارسی ↔ انگلیسی</h2>
-  <p>مترجم کاملاً محلی با عبارت‌نامه و الگوهای جمله‌ای داخلی؛ بدون API و بدون ارسال متن به اینترنت.</p>
-  <div class="translator-status"><span class="translator-dot ready" id="translatorDot"></span><span id="translatorStatus">واژه‌نامهٔ آفلاین آماده است</span></div>
-  <div class="translator-status"><span class="translator-dot" id="speechDot"></span><span id="speechStatus">در حال بررسی صداهای آفلاین گوشی...</span></div>
-  <button class="translator-action secondary" onclick="refreshSpeechStatus()">🔊 بررسی/دانلود مدل صدا</button>
-</div>
-<div class="translator-controls">
-  <select class="translator-lang" id="translatorFrom">
-    <option value="fa">فارسی</option>
-    <option value="en">English</option>
-  </select>
-  <button class="translator-swap" onclick="swapTranslatorLanguages()" title="جابجایی زبان‌ها">⇄</button>
-  <select class="translator-lang" id="translatorTo">
-    <option value="en">English</option>
-    <option value="fa">فارسی</option>
-  </select>
-</div>
-<div class="translator-panel">
-  <div class="translator-label"><span>متن ورودی</span><button style="border:0;background:none;color:var(--primary);font-family:inherit;font-weight:800;cursor:pointer" onclick="clearTranslator()">پاک کردن</button></div>
-  <textarea class="translator-textarea" id="translatorInput" placeholder="کلمه یا جمله را اینجا بنویس..." dir="auto"></textarea>
-</div>
-<div class="translator-actions">
-  <button class="translator-action primary" onclick="translateText()">✨ ترجمه</button>
-  <button class="translator-action secondary" onclick="speakTranslation()">🔊 خواندن ترجمه</button>
-</div>
-<div class="translator-panel" style="margin-top:12px;">
-  <div class="translator-label"><span>نتیجه ترجمه</span><button style="border:0;background:none;color:var(--primary);font-family:inherit;font-weight:800;cursor:pointer" onclick="copyTranslation()">📋 کپی</button></div>
-  <div class="translator-output empty" id="translatorOutput">ترجمه اینجا نمایش داده می‌شود...</div>
-</div>
-<div class="translator-pack">
-  <b>📦 شفافیت ترجمهٔ آفلاین:</b> ترجمه داخل دستگاه انجام می‌شود؛ متن به هیچ سرویس اینترنتی فرستاده نمی‌شود. عبارت‌ها و الگوهای رایج فارسی/انگلیسی پشتیبانی می‌شوند و برای جمله‌های کاملاً ناشناخته، برنامه نتیجهٔ حدسی تولید نمی‌کند.
-</div>
-<div class="translator-history">
-  <h3>🕘 ترجمه‌های اخیر</h3>
-  <div id="translatorHistory"></div>
-</div>
-</div>
+
 </main>
 <div class="toast" id="toast"></div>
 <div class="modal-overlay" id="modalOverlay" onclick="closeModalOutside(event)">
@@ -2767,106 +2701,7 @@ async function processBulkFiles(files){
 
 
 // ============================================
-// TRANSLATOR - فارسی ↔ English
-// ============================================
-const TRANSLATOR_HISTORY_KEY='simorgh_translation_history_v1';
-let translatorLastResult='';
-
-function normalizeTranslatorText(v){
-  return String(v||'')
-    .replace(/ي/g,'ی').replace(/ى/g,'ی').replace(/ك/g,'ک')
-    .replace(/\u200c/g,' ').replace(/[َُِّْـ]/g,'')
-    .replace(/[۰-۹]/g,d=>String('۰۱۲۳۴۵۶۷۸۹'.indexOf(d)))
-    .trim().replace(/[!?؟،,.;:]+/g,' ').replace(/\s+/g,' ').toLowerCase();
-}
-
-function getTranslatorDictionary(){
-  const map={};
-  if(typeof LESSONS!=='undefined'){
-    LESSONS.forEach(l=>(l.words||[]).forEach(w=>{
-      const en=normalizeTranslatorText(w.en), fa=normalizeTranslatorText(w.fa);
-      if(en&&!map['en>'+en])map['en>'+en]=w.fa;
-      if(fa&&!map['fa>'+fa])map['fa>'+fa]=w.en;
-    }));
-  }
-  return map;
-}
-
-function getTranslationHistory(){
-  try{return JSON.parse(localStorage.getItem(TRANSLATOR_HISTORY_KEY)||'[]')}catch(e){return []}
-}
-function saveTranslationHistory(src,dst,from,to){
-  if(!src||!dst)return;
-  const h=getTranslationHistory().filter(x=>!(x.src===src&&x.from===from&&x.to===to));
-  h.unshift({src,dst,from,to,t:Date.now()});
-  localStorage.setItem(TRANSLATOR_HISTORY_KEY,JSON.stringify(h.slice(0,20)));
-  renderTranslationHistory();
-}
-function renderTranslationHistory(){
-  const el=document.getElementById('translatorHistory');if(!el)return;
-  const h=getTranslationHistory();
-  el.innerHTML=h.length?h.map((x,i)=>`<div class="translator-history-item" onclick="useTranslationHistory(${i})"><div class="src">${escapeHtml(x.src)}</div><div class="dst">${escapeHtml(x.dst)}</div></div>`).join(''):'<div style="font-size:12px;color:var(--text-light);padding:8px">هنوز ترجمه‌ای ذخیره نشده است.</div>';
-}
-function useTranslationHistory(i){
-  const x=getTranslationHistory()[i];if(!x)return;
-  document.getElementById('translatorFrom').value=x.from;
-  document.getElementById('translatorTo').value=x.to;
-  document.getElementById('translatorInput').value=x.src;
-  setTranslatorOutput(x.dst);
-}
-function setTranslatorOutput(text){
-  const el=document.getElementById('translatorOutput');if(!el)return;
-  el.textContent=text||'';
-  el.classList.toggle('empty',!text);
-  translatorLastResult=text||'';
-}
-function setTranslatorStatus(text,state){
-  const dot=document.getElementById('translatorDot'),st=document.getElementById('translatorStatus');
-  if(st)st.textContent=text;
-  if(dot)dot.className='translator-dot '+(state||'');
-}
-function showTranslator(){
-  showScreen('translatorScreen','left');renderTranslationHistory();
-  setTranslatorStatus('واژه‌نامه و عبارت‌نامهٔ داخلی آماده‌اند؛ هیچ اتصالی برقرار نمی‌شود','ready');
-  refreshSpeechStatus();closeSidebarIfOpen();
-}
-function closeSidebarIfOpen(){document.getElementById('sidebar')?.classList.remove('show');document.getElementById('sidebarOverlay')?.classList.remove('show');document.getElementById('menuBtn')?.classList.remove('active');}
-async function refreshSpeechStatus(){
-  const label=document.getElementById('speechStatus'),dot=document.getElementById('speechDot');
-  const plugin=getSimorghSpeechPlugin();
-  if(!plugin||typeof plugin.getStatus!=='function'){
-    if(label)label.textContent='موتور صدای embedded فقط در APK فعال است';if(dot)dot.className='translator-dot';return;
-  }
-  if(label)label.textContent='در حال بررسی/دانلود مدل صدای embedded...';if(dot)dot.className='translator-dot busy';
-  try{
-    const r=await plugin.getStatus();
-    const en=r.englishOffline?'انگلیسی زن آماده':(r.englishDownloading?'انگلیسی در حال دانلود':'انگلیسی آماده‌سازی نشده');
-    const fa=r.persianOffline?'فارسی زن آماده':(r.persianDownloading?'فارسی در حال دانلود':'فارسی آماده‌سازی نشده');
-    if(label)label.textContent=`موتور embedded: ${en} · ${fa}`;
-    if(dot)dot.className='translator-dot '+(r.englishOffline||r.persianOffline?'ready':'');
-    if(!r.englishOffline||!r.persianOffline) setTimeout(refreshSpeechStatus,4000);
-  }catch(e){if(label)label.textContent='دانلود مدل صدا ناموفق بود؛ اتصال اینترنت را بررسی کن';if(dot)dot.className='translator-dot';}
-}
-
-function swapTranslatorLanguages(){
-  const f=document.getElementById('translatorFrom'),t=document.getElementById('translatorTo');
-  const old=f.value;f.value=t.value;t.value=old;
-  const input=document.getElementById('translatorInput');
-  if(input.value.trim()&&translatorLastResult){input.value=translatorLastResult;setTranslatorOutput('');}
-}
-function clearTranslator(){document.getElementById('translatorInput').value='';setTranslatorOutput('');translatorLastResult='';}
-async function copyTranslation(){
-  if(!translatorLastResult)return;
-  try{await navigator.clipboard.writeText(translatorLastResult);showToast('📋 ترجمه کپی شد');}
-  catch(e){showToast('⚠️ کپی خودکار در این دستگاه در دسترس نیست');}
-}
-function speakTranslation(){if(translatorLastResult)speak(translatorLastResult);}
-
-const OFFLINE_PHRASES=[
- ['سلام عشقم حالت چطوره خوبی','Hello my love, how are you? Are you okay?'],['این آدرس کجاست','Where is this address?'],['آدرس کجاست','Where is the address?'],['سلام عزیزم حالت چطوره','Hello dear, how are you?'],['how are you doing','حالت چطوره؟'],['where is this address','این آدرس کجاست؟'],['where is the address','آدرس کجاست؟'],
- ['hello','سلام'],['hello, how are you?','سلام، حالت چطوره؟'],['how are you?','حالت چطوره؟'],['i am fine, thank you','من خوبم، ممنون'],['thank you','متشکرم'],['you are welcome','خواهش می‌کنم'],['good morning','صبح بخیر'],['good afternoon','ظهر بخیر'],['good evening','عصر بخیر'],['good night','شب بخیر'],['goodbye','خداحافظ'],['see you later','بعداً می‌بینمت'],['please','لطفاً'],['excuse me','ببخشید'],['i am sorry','متأسفم'],['yes','بله'],['no','نه'],['what is your name?','اسمت چیست؟'],['my name is ...','اسم من ... است'],['where are you from?','اهل کجا هستی؟'],['i am from iran','من اهل ایران هستم'],['do you speak english?','آیا انگلیسی صحبت می‌کنی؟'],['i am learning english','من دارم انگلیسی یاد می‌گیرم'],['i do not understand','متوجه نمی‌شوم'],['could you speak slowly?','ممکن است آهسته‌تر صحبت کنید؟'],['please repeat that','لطفاً آن را تکرار کنید'],['how much is this?','قیمت این چقدر است؟'],['i would like a coffee','یک قهوه می‌خواهم'],['can i have the menu?','می‌توانم منو را ببینم؟'],['the bill, please','لطفاً صورت‌حساب'],['where is the bathroom?','دستشویی کجاست؟'],['where is the train station?','ایستگاه قطار کجاست؟'],['turn left','به چپ بپیچ'],['turn right','به راست بپیچ'],['go straight ahead','مستقیم برو'],['i need help','به کمک نیاز دارم'],['call a doctor','به پزشک زنگ بزنید'],['i am lost','گم شده‌ام'],['i am hungry','گرسنه‌ام'],['i am thirsty','تشنه‌ام'],['what time is it?','ساعت چند است؟'],['today is a beautiful day','امروز روز زیبایی است'],['i like this','این را دوست دارم'],['i love you','دوستت دارم'],['have a nice day','روز خوبی داشته باشید'],['i live in tehran','من در تهران زندگی می‌کنم'],['i work here','من اینجا کار می‌کنم'],['let us practice english','بیایید انگلیسی تمرین کنیم'],['open the door','در را باز کن'],['close the window','پنجره را ببند'],['i am ready','آماده‌ام'],['what does this word mean?','این کلمه چه معنی می‌دهد؟'],['can you help me?','می‌توانی به من کمک کنی؟'],['i need water','به آب نیاز دارم'],['where is the hotel?','هتل کجاست؟'],['i have a reservation','رزرو دارم'],['i would like to pay','می‌خواهم پرداخت کنم'],['that is wonderful','عالی است'],['see you tomorrow','فردا می‌بینمت'],
- ['سلام','hello'],['سلام حالت چطوره','hello, how are you?'],['حالت چطوره','how are you?'],['من خوبم ممنون','i am fine, thank you'],['ممنون','thank you'],['خواهش می‌کنم','you are welcome'],['صبح بخیر','good morning'],['ظهر بخیر','good afternoon'],['عصر بخیر','good evening'],['شب بخیر','good night'],['خداحافظ','goodbye'],['بعدا میبینمت','see you later'],['لطفا','please'],['ببخشید','excuse me'],['متاسفم','i am sorry'],['بله','yes'],['نه','no'],['اسمت چیست','what is your name?'],['من اهل ایران هستم','i am from iran'],['آیا انگلیسی صحبت میکنی','do you speak english?'],['من دارم انگلیسی یاد میگیرم','i am learning english'],['متوجه نمیشوم','i do not understand'],['ممکن است آهسته تر صحبت کنید','could you speak slowly?'],['لطفا آن را تکرار کنید','please repeat that'],['قیمت این چقدر است','how much is this?'],['یک قهوه میخواهم','i would like a coffee'],['میتوانم منو را ببینم','can i have the menu?'],['لطفا صورت حساب','the bill, please'],['دستشویی کجاست','where is the bathroom?'],['ایستگاه قطار کجاست','where is the train station?'],['به چپ بپیچ','turn left'],['به راست بپیچ','turn right'],['مستقیم برو','go straight ahead'],['به کمک نیاز دارم','i need help'],['به پزشک زنگ بزنید','call a doctor'],['گم شده ام','i am lost'],['گرسنه ام','i am hungry'],['تشنه ام','i am thirsty'],['ساعت چند است','what time is it?'],['امروز روز زیبایی است','today is a beautiful day'],['این را دوست دارم','i like this'],['دوستت دارم','i love you'],['روز خوبی داشته باشید','have a nice day'],['من در تهران زندگی میکنم','i live in tehran'],['من اینجا کار میکنم','i work here'],['بیایید انگلیسی تمرین کنیم','let us practice english'],['در را باز کن','open the door'],['پنجره را ببند','close the window'],['آماده ام','i am ready'],['این کلمه چه معنی میدهد','what does this word mean?'],['میتوانی به من کمک کنی','can you help me?'],['به آب نیاز دارم','i need water'],['هتل کجاست','where is the hotel?'],['رزرو دارم','i have a reservation'],['میخواهم پرداخت کنم','i would like to pay'],['عالی است','that is wonderful'],['فردا میبینمت','see you tomorrow']
-];
+// مکالمهٔ دوزبانه؛ ترجمهٔ مستقل از این نسخه حذف شده است.
 const OFFLINE_CONVERSATIONS=[
  {id:'greetings',title:'سلام و آشنایی',icon:'👋',lines:[['A','Hello! How are you?','سلام! حالت چطوره؟'],['B','I am fine, thank you. And you?','من خوبم، ممنون. تو چطوری؟'],['A','I am great. What is your name?','عالی‌ام. اسمت چیست؟'],['B','My name is Sara. Nice to meet you.','اسم من سارا است. از آشنایی با تو خوشحالم.'],['A','Nice to meet you too!','من هم از آشنایی با تو خوشحالم!']]},
  {id:'cafe',title:'در کافه',icon:'☕',lines:[['A','Hello. Can I have the menu, please?','سلام. لطفاً می‌توانم منو را ببینم؟'],['B','Of course. What would you like?','حتماً. چه چیزی میل دارید؟'],['A','I would like a coffee and a sandwich.','یک قهوه و یک ساندویچ می‌خواهم.'],['B','Anything else?','چیز دیگری هم می‌خواهید؟'],['A','No, thank you. The bill, please.','نه، ممنون. لطفاً صورت‌حساب.']]},
@@ -2885,28 +2720,6 @@ function renderConversations(){
 function selectConversation(id){if(!OFFLINE_CONVERSATIONS.some(c=>c.id===id))return;currentConversationId=id;renderConversations();}
 function speakConversation(i,lang){const c=OFFLINE_CONVERSATIONS.find(x=>x.id===currentConversationId);if(!c||!c.lines[i])return;speak(c.lines[i][lang==='fa'?2:1],0.88);}
 
-function lookupLocalTranslation(text,from,to){
- const key=normalizeTranslatorText(text).replace(/[!?؟،,.;:]+/g,' ').replace(/\s+/g,' ').trim();if(!key)return '';
- const phraseMap={};OFFLINE_PHRASES.forEach(pair=>{const a=normalizeTranslatorText(pair[0]).replace(/[!?؟،,.;:]+/g,' ').replace(/\s+/g,' ').trim(),src=/[\u0600-\u06FF]/.test(pair[0])?'fa':'en';if(a&&src===from)phraseMap[from+'>'+a]=pair[1];});
- const exact=phraseMap[from+'>'+key];if(exact)return exact;
- const dict=getTranslatorDictionary(),words=key.split(' '),out=[];let i=0;
- while(i<words.length){let found=false;
-  for(let n=Math.min(6,words.length-i);n>0;n--){const chunk=words.slice(i,i+n).join(' '),phrase=phraseMap[from+'>'+chunk],entry=dict[from+'>'+chunk];if(phrase||entry){out.push(phrase||entry);i+=n;found=true;break;}}
-  if(!found){const word=words[i].replace(/[^\p{L}\p{N}'’-]/gu,'');const translated=dict[from+'>'+word];if(!translated)return '';out.push(translated);i++;}
- }
- return out.join(' ');
-}
-async function translateText(){
- const input=document.getElementById('translatorInput'),text=input?.value.trim();if(!text){showToast('✍️ ابتدا متن را وارد کن');return;}
- const from=document.getElementById('translatorFrom').value,to=document.getElementById('translatorTo').value;
- if(from===to){setTranslatorOutput(text);setTranslatorStatus('زبان مبدأ و مقصد یکسان است','ready');return;}
- setTranslatorStatus('در حال جست‌وجو در عبارت‌نامهٔ محلی...','busy');setTranslatorOutput('');
- const result=lookupLocalTranslation(text,from,to);
- if(result){setTranslatorOutput(result);saveTranslationHistory(text,result,from,to);setTranslatorStatus('ترجمه از واژه‌نامهٔ محلی؛ بدون اینترنت','ready');}
- else{setTranslatorOutput('این عبارت در واژه‌نامهٔ آفلاین پیدا نشد. برای حفظ آفلاین‌بودن، متن به هیچ سرویس اینترنتی ارسال نشد.');setTranslatorStatus('عبارت ناشناخته است؛ اینترنت استفاده نمی‌شود','');}
-}
-
-// ============================================
 // TABS
 
 // ============================================
