@@ -529,19 +529,19 @@ body{display:flex;flex-direction:column}
 
 <div class="screen" id="conversationScreen">
 <button class="back-btn" onclick="showScreen('homeScreen','right')">→ بازگشت</button>
-<div class="conversation-hero"><h2>🗣️ تمرین مکالمهٔ انگلیسی</h2><p>گفت‌وگوهای کوتاه و دوزبانه برای تمرین روزمره؛ همهٔ متن‌ها داخل برنامه هستند و پخش صدا فقط از صدای آفلاینِ نصب‌شده روی گوشی استفاده می‌کند.</p></div>
+<div class="conversation-hero"><h2>🗣️ تمرین مکالمهٔ انگلیسی</h2><p>گفت‌وگوهای کوتاه و دوزبانه برای تمرین روزمره؛ موتور صدای زن فارسی و انگلیسی در اولین اجرا دانلود می‌شود و بعد از آن کاملاً داخل خود برنامه و آفلاین کار می‌کند.</p></div>
 <div class="conversation-topics" id="conversationTopics"></div>
 <div id="conversationLines"></div>
-<div class="offline-note">🔒 این بخش هیچ API یا سرویس اینترنتی ندارد. برای پخش گفتار، گوشی باید صدای آفلاین انگلیسی و/یا فارسی داشته باشد؛ اگر زبان پشتیبانی نشد، از تنظیمات Android بخش Text-to-speech صدای محلی نصب‌شده را بررسی کن.</div>
+<div class="offline-note">🔒 مدل‌های صدا فقط یک‌بار در اولین اجرا دانلود می‌شوند؛ بعد از نصب، متن به Browser، Android TTS یا API ارسال نمی‌شود.</div>
 </div>
 <div class="screen" id="translatorScreen">
 <button class="back-btn" onclick="showScreen('homeScreen','right')">→ بازگشت</button>
 <div class="translator-hero">
   <h2>🌐 مترجم فارسی ↔ انگلیسی</h2>
-  <p>مترجم کاملاً محلی با واژه‌های درس‌ها و عبارت‌نامهٔ داخلی؛ بدون API، دانلود مدل یا اتصال اینترنت.</p>
+  <p>مترجم کاملاً محلی با عبارت‌نامه و الگوهای جمله‌ای داخلی؛ بدون API و بدون ارسال متن به اینترنت.</p>
   <div class="translator-status"><span class="translator-dot ready" id="translatorDot"></span><span id="translatorStatus">واژه‌نامهٔ آفلاین آماده است</span></div>
   <div class="translator-status"><span class="translator-dot" id="speechDot"></span><span id="speechStatus">در حال بررسی صداهای آفلاین گوشی...</span></div>
-  <button class="translator-action secondary" onclick="refreshSpeechStatus()">🔊 بررسی صدای آفلاین گوشی</button>
+  <button class="translator-action secondary" onclick="refreshSpeechStatus()">🔊 بررسی/دانلود مدل صدا</button>
 </div>
 <div class="translator-controls">
   <select class="translator-lang" id="translatorFrom">
@@ -567,7 +567,7 @@ body{display:flex;flex-direction:column}
   <div class="translator-output empty" id="translatorOutput">ترجمه اینجا نمایش داده می‌شود...</div>
 </div>
 <div class="translator-pack">
-  <b>📦 شفافیت ترجمهٔ آفلاین:</b> ترجمه فقط با عبارت‌های ذخیره‌شده و واژگان درس‌های همین برنامه انجام می‌شود؛ جمله‌های ناشناخته به‌جای ارسال به اینترنت، شناسایی‌نشده اعلام می‌شوند. این نسخه مترجم عمومیِ تمام‌جمله‌ای نیست.
+  <b>📦 شفافیت ترجمهٔ آفلاین:</b> ترجمه داخل دستگاه انجام می‌شود؛ متن به هیچ سرویس اینترنتی فرستاده نمی‌شود. عبارت‌ها و الگوهای رایج فارسی/انگلیسی پشتیبانی می‌شوند و برای جمله‌های کاملاً ناشناخته، برنامه نتیجهٔ حدسی تولید نمی‌کند.
 </div>
 <div class="translator-history">
   <h3>🕘 ترجمه‌های اخیر</h3>
@@ -2835,16 +2835,17 @@ async function refreshSpeechStatus(){
   const label=document.getElementById('speechStatus'),dot=document.getElementById('speechDot');
   const plugin=getSimorghSpeechPlugin();
   if(!plugin||typeof plugin.getStatus!=='function'){
-    if(label)label.textContent='وضعیت گفتار فقط در APK قابل بررسی است';if(dot)dot.className='translator-dot';return;
+    if(label)label.textContent='موتور صدای embedded فقط در APK فعال است';if(dot)dot.className='translator-dot';return;
   }
-  if(label)label.textContent='در حال بررسی صدای محلی...';if(dot)dot.className='translator-dot busy';
+  if(label)label.textContent='در حال بررسی/دانلود مدل صدای embedded...';if(dot)dot.className='translator-dot busy';
   try{
     const r=await plugin.getStatus();
-    const en=r.englishOffline?'انگلیسی آماده':'انگلیسی نصب نیست';
-    const fa=r.persianOffline?'فارسی آماده':'فارسی نصب نیست';
-    if(label)label.textContent=`صدای آفلاین: ${en} · ${fa}`;
+    const en=r.englishOffline?'انگلیسی زن آماده':(r.englishDownloading?'انگلیسی در حال دانلود':'انگلیسی آماده‌سازی نشده');
+    const fa=r.persianOffline?'فارسی زن آماده':(r.persianDownloading?'فارسی در حال دانلود':'فارسی آماده‌سازی نشده');
+    if(label)label.textContent=`موتور embedded: ${en} · ${fa}`;
     if(dot)dot.className='translator-dot '+(r.englishOffline||r.persianOffline?'ready':'');
-  }catch(e){if(label)label.textContent='موتور گفتار گوشی در دسترس نیست';if(dot)dot.className='translator-dot';}
+    if(!r.englishOffline||!r.persianOffline) setTimeout(refreshSpeechStatus,4000);
+  }catch(e){if(label)label.textContent='دانلود مدل صدا ناموفق بود؛ اتصال اینترنت را بررسی کن';if(dot)dot.className='translator-dot';}
 }
 
 function swapTranslatorLanguages(){
@@ -2862,6 +2863,7 @@ async function copyTranslation(){
 function speakTranslation(){if(translatorLastResult)speak(translatorLastResult);}
 
 const OFFLINE_PHRASES=[
+ ['سلام عشقم حالت چطوره خوبی','Hello my love, how are you? Are you okay?'],['این آدرس کجاست','Where is this address?'],['آدرس کجاست','Where is the address?'],['سلام عزیزم حالت چطوره','Hello dear, how are you?'],['how are you doing','حالت چطوره؟'],['where is this address','این آدرس کجاست؟'],['where is the address','آدرس کجاست؟'],
  ['hello','سلام'],['hello, how are you?','سلام، حالت چطوره؟'],['how are you?','حالت چطوره؟'],['i am fine, thank you','من خوبم، ممنون'],['thank you','متشکرم'],['you are welcome','خواهش می‌کنم'],['good morning','صبح بخیر'],['good afternoon','ظهر بخیر'],['good evening','عصر بخیر'],['good night','شب بخیر'],['goodbye','خداحافظ'],['see you later','بعداً می‌بینمت'],['please','لطفاً'],['excuse me','ببخشید'],['i am sorry','متأسفم'],['yes','بله'],['no','نه'],['what is your name?','اسمت چیست؟'],['my name is ...','اسم من ... است'],['where are you from?','اهل کجا هستی؟'],['i am from iran','من اهل ایران هستم'],['do you speak english?','آیا انگلیسی صحبت می‌کنی؟'],['i am learning english','من دارم انگلیسی یاد می‌گیرم'],['i do not understand','متوجه نمی‌شوم'],['could you speak slowly?','ممکن است آهسته‌تر صحبت کنید؟'],['please repeat that','لطفاً آن را تکرار کنید'],['how much is this?','قیمت این چقدر است؟'],['i would like a coffee','یک قهوه می‌خواهم'],['can i have the menu?','می‌توانم منو را ببینم؟'],['the bill, please','لطفاً صورت‌حساب'],['where is the bathroom?','دستشویی کجاست؟'],['where is the train station?','ایستگاه قطار کجاست؟'],['turn left','به چپ بپیچ'],['turn right','به راست بپیچ'],['go straight ahead','مستقیم برو'],['i need help','به کمک نیاز دارم'],['call a doctor','به پزشک زنگ بزنید'],['i am lost','گم شده‌ام'],['i am hungry','گرسنه‌ام'],['i am thirsty','تشنه‌ام'],['what time is it?','ساعت چند است؟'],['today is a beautiful day','امروز روز زیبایی است'],['i like this','این را دوست دارم'],['i love you','دوستت دارم'],['have a nice day','روز خوبی داشته باشید'],['i live in tehran','من در تهران زندگی می‌کنم'],['i work here','من اینجا کار می‌کنم'],['let us practice english','بیایید انگلیسی تمرین کنیم'],['open the door','در را باز کن'],['close the window','پنجره را ببند'],['i am ready','آماده‌ام'],['what does this word mean?','این کلمه چه معنی می‌دهد؟'],['can you help me?','می‌توانی به من کمک کنی؟'],['i need water','به آب نیاز دارم'],['where is the hotel?','هتل کجاست؟'],['i have a reservation','رزرو دارم'],['i would like to pay','می‌خواهم پرداخت کنم'],['that is wonderful','عالی است'],['see you tomorrow','فردا می‌بینمت'],
  ['سلام','hello'],['سلام حالت چطوره','hello, how are you?'],['حالت چطوره','how are you?'],['من خوبم ممنون','i am fine, thank you'],['ممنون','thank you'],['خواهش می‌کنم','you are welcome'],['صبح بخیر','good morning'],['ظهر بخیر','good afternoon'],['عصر بخیر','good evening'],['شب بخیر','good night'],['خداحافظ','goodbye'],['بعدا میبینمت','see you later'],['لطفا','please'],['ببخشید','excuse me'],['متاسفم','i am sorry'],['بله','yes'],['نه','no'],['اسمت چیست','what is your name?'],['من اهل ایران هستم','i am from iran'],['آیا انگلیسی صحبت میکنی','do you speak english?'],['من دارم انگلیسی یاد میگیرم','i am learning english'],['متوجه نمیشوم','i do not understand'],['ممکن است آهسته تر صحبت کنید','could you speak slowly?'],['لطفا آن را تکرار کنید','please repeat that'],['قیمت این چقدر است','how much is this?'],['یک قهوه میخواهم','i would like a coffee'],['میتوانم منو را ببینم','can i have the menu?'],['لطفا صورت حساب','the bill, please'],['دستشویی کجاست','where is the bathroom?'],['ایستگاه قطار کجاست','where is the train station?'],['به چپ بپیچ','turn left'],['به راست بپیچ','turn right'],['مستقیم برو','go straight ahead'],['به کمک نیاز دارم','i need help'],['به پزشک زنگ بزنید','call a doctor'],['گم شده ام','i am lost'],['گرسنه ام','i am hungry'],['تشنه ام','i am thirsty'],['ساعت چند است','what time is it?'],['امروز روز زیبایی است','today is a beautiful day'],['این را دوست دارم','i like this'],['دوستت دارم','i love you'],['روز خوبی داشته باشید','have a nice day'],['من در تهران زندگی میکنم','i live in tehran'],['من اینجا کار میکنم','i work here'],['بیایید انگلیسی تمرین کنیم','let us practice english'],['در را باز کن','open the door'],['پنجره را ببند','close the window'],['آماده ام','i am ready'],['این کلمه چه معنی میدهد','what does this word mean?'],['میتوانی به من کمک کنی','can you help me?'],['به آب نیاز دارم','i need water'],['هتل کجاست','where is the hotel?'],['رزرو دارم','i have a reservation'],['میخواهم پرداخت کنم','i would like to pay'],['عالی است','that is wonderful'],['فردا میبینمت','see you tomorrow']
 ];

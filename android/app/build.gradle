@@ -3,6 +3,10 @@ apply plugin: 'com.android.application'
 android {
     namespace "ir.simorgh.irani"
     compileSdk rootProject.ext.compileSdkVersion
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_21
+        targetCompatibility JavaVersion.VERSION_21
+    }
     defaultConfig {
         applicationId "ir.simorgh.irani"
         minSdkVersion rootProject.ext.minSdkVersion
@@ -26,6 +30,11 @@ android {
             minifyEnabled true
             shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+    packagingOptions {
+        jniLibs {
+            useLegacyPackaging true
         }
     }
 }
