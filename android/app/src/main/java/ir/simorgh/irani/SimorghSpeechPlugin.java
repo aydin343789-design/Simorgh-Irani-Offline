@@ -44,6 +44,8 @@ public class SimorghSpeechPlugin extends Plugin {
     private final Map<String, Object> modelLocks = new HashMap<>();
     private volatile boolean faDownloading;
     private volatile boolean enDownloading;
+    private volatile int faProgress;
+    private volatile int enProgress;
     private volatile String faError = "";
     private volatile String enError = "";
 
@@ -77,6 +79,10 @@ public class SimorghSpeechPlugin extends Plugin {
         result.put("ready", isReady("fa") || isReady("en"));
         result.put("embedded", true);
         result.put("engine", "sherpa-onnx-piper-v1.13.8");
+        result.put("packaged", true);
+        result.put("persianProgress", faProgress);
+        result.put("englishProgress", enProgress);
+        result.put("progress", (faProgress + enProgress) / 2);
         result.put("englishOffline", isReady("en"));
         result.put("persianOffline", isReady("fa"));
         result.put("englishDownloading", enDownloading);
@@ -127,6 +133,10 @@ public class SimorghSpeechPlugin extends Plugin {
                 result.put("language", language);
                 result.put("offline", true);
                 result.put("engine", "sherpa-onnx-piper-v1.13.8");
+        result.put("packaged", true);
+        result.put("persianProgress", faProgress);
+        result.put("englishProgress", enProgress);
+        result.put("progress", (faProgress + enProgress) / 2);
                 call.resolve(result);
             } catch (Throwable error) {
                 Log.e(TAG, "embedded TTS failed for " + languageKey, error);
@@ -151,7 +161,10 @@ public class SimorghSpeechPlugin extends Plugin {
             try {
                 if (!isModelComplete(root, language)) {
                     setDownloading(language, true);
-                    downloadAndExtract("fa".equals(language) ? FA_URL : EN_URL, root);
+                    setProgress(language, 5);
+                    boolean packaged = installPackagedModel(language, root);
+                    if (!packaged) downloadAndExtract("fa".equals(language) ? FA_URL : EN_URL, root);
+                    setProgress(language, 95);
                     if (!isModelComplete(root, language)) throw new IOException("model_files_missing");
                     if (!marker.exists() && !marker.createNewFile()) throw new IOException("cannot_mark_model_installed");
                 }
@@ -161,12 +174,13 @@ public class SimorghSpeechPlugin extends Plugin {
                     else engine.release();
                 }
                 setError(language, "");
+                setProgress(language, 100);
                 Log.i(TAG, "ready: " + language + " using " + root.getAbsolutePath());
             } catch (Throwable error) {
                 setError(language, safeMessage(error));
                 Log.e(TAG, "model init failed for " + language, error);
                 if (marker.exists()) marker.delete();
-            } finally { setDownloading(language, false); }
+            } finally { setDownloading(language, false); if (!isReady(language)) setProgress(language, 0); }
         }
     }
 
@@ -178,6 +192,27 @@ public class SimorghSpeechPlugin extends Plugin {
     }
 
     private void setDownloading(String language, boolean value) { if ("fa".equals(language)) faDownloading = value; else enDownloading = value; }
+    private void setProgress(String language, int value) { if ("fa".equals(language)) faProgress = value; else enProgress = value; }
+
+    private boolean installPackagedModel(String language, File root) throws IOException {
+        String assetName = "tts/" + ("fa".equals(language) ? "tts-fa.zip" : "tts-en.zip");
+        File parent = root.getParentFile();
+        if (!parent.exists() && !parent.mkdirs()) throw new IOException("cannot_create_model_directory");
+        File zip = new File(parent, root.getName() + ".download");
+        try (InputStream input = getContext().getAssets().open(assetName, android.content.res.AssetManager.ACCESS_STREAMING);
+             FileOutputStream output = new FileOutputStream(zip)) {
+            byte[] buffer = new byte[1024 * 64]; int count;
+            while ((count = input.read(buffer)) != -1) output.write(buffer, 0, count);
+        } catch (java.io.FileNotFoundException missing) {
+            return false;
+        }
+        setProgress(language, 70);
+        if (root.exists()) deleteRecursively(root);
+        if (!root.mkdirs()) throw new IOException("cannot_create_extracted_model_directory");
+        unzip(zip, root);
+        if (!zip.delete()) zip.deleteOnExit();
+        return true;
+    }
     private void setError(String language, String value) { if ("fa".equals(language)) faError = value; else enError = value; }
 
     private OfflineTts createEngine(File root, String language) {
