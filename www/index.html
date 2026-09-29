@@ -1624,7 +1624,7 @@ function setAudioSourceBadge(source){
   if(uBtnB)uBtnB.classList.toggle('has-audio',source==='user');
 }
 
-// منبع صدا: ابتدا فایل آپلودی/ضبط‌شده کاربر، در غیر این صورت گفتار آفلاین Android
+// منبع صدا: ابتدا فایل آپلودی/ضبط‌شده کاربر، در غیر این صورت موتور embedded آفلاین
 function detectSpeechLanguage(text){return /[\u0600-\u06FF]/.test(String(text||''))?'fa-IR':'en-US';}
 function getSimorghSpeechPlugin(){
   const cap=window.Capacitor;
@@ -1647,19 +1647,38 @@ async function speakOfflineTTS(text,rate=0.85){
   const plugin=getSimorghSpeechPlugin();
   if(!plugin||typeof plugin.speak!=='function'){
     setSpeakBtnLoading(false);setAudioSourceBadge('none');
-    showToast('برای گفتار آفلاین، نسخهٔ APK و صدای محلی گوشی لازم است');return;
+    showToast('برای دریافت موتور گفتار آفلاین، نسخهٔ APK و اتصال اینترنت لازم است');return;
   }
   try{
+    if(typeof plugin.getStatus==='function'){
+      const status=await plugin.getStatus();
+      if(status?.persianDownloading||status?.englishDownloading)showToast('⏳ در حال دانلود و نصب موتور گفتار آفلاین؛ لطفاً صبر کنید...');
+    }
     await plugin.speak({text:String(text),lang:detectSpeechLanguage(text),rate:Math.min(Math.max(Number(rate)||0.85,0.5),1.5)});
     setAudioSourceBadge('tts');
   }catch(e){
     const message=String(e?.message||e||'');
     setAudioSourceBadge('none');
-    if(message.toLowerCase().includes('offline_voice_unavailable')||message.toLowerCase().includes('voice')){
-      showToast(detectSpeechLanguage(text)==='fa-IR'?'صدای آفلاین فارسی روی گوشی نصب/پشتیبانی نمی‌شود':'صدای آفلاین انگلیسی روی گوشی نصب/پشتیبانی نمی‌شود');
-    }else showToast('موتور گفتار آفلاین گوشی آماده نیست؛ دوباره امتحان کن');
+    const lower=message.toLowerCase();
+    if(lower.includes('model_download_http')||lower.includes('unknownhost')||lower.includes('unable to resolve')||lower.includes('connectexception')||lower.includes('network')){
+      showToast('🌐 برای دریافت موتور گفتار آفلاین، به اینترنت متصل شوید و دوباره روی بلندگو بزنید');
+    }else if(lower.includes('offline_voice_unavailable')||lower.includes('voice')){
+      showToast(detectSpeechLanguage(text)==='fa-IR'?'صدای آفلاین فارسی هنوز آماده نشده است؛ اتصال اینترنت را بررسی کنید':'صدای آفلاین انگلیسی هنوز آماده نشده است؛ اتصال اینترنت را بررسی کنید');
+    }else showToast('موتور گفتار آفلاین آماده نیست؛ دانلود/نصب آن هنوز کامل نشده است');
   }finally{setSpeakBtnLoading(false);}
 }
+
+async function notifySpeechDownloadState(){
+  const plugin=getSimorghSpeechPlugin();
+  if(!plugin||typeof plugin.getStatus!=='function')return;
+  try{
+    const status=await plugin.getStatus();
+    if(status?.persianDownloading||status?.englishDownloading)showToast('⏳ در حال دانلود و نصب موتور گفتار آفلاین؛ لطفاً برنامه را باز نگه دارید...');
+    else if(status?.persianError||status?.englishError)showToast('🌐 برای دریافت موتور گفتار آفلاین به اینترنت متصل شوید');
+  }catch(_){/* native plugin may still be starting */}
+}
+setTimeout(notifySpeechDownloadState,900);
+setTimeout(notifySpeechDownloadState,6000);
 
 // تنها منبع صدا: فایل آپلودی/ضبط‌شده توسط کاربر
 async function tryUserAudio(text,wKey,wKeyGlobal,rate,onFail){
@@ -2540,7 +2559,7 @@ function showTips(){
   document.getElementById('modalOverlay').classList.add('show');toggleSidebar();
 }
 
-function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);}
+function showToast(msg){const t=document.getElementById('toast');if(!t)return;t.textContent=msg;t.classList.add('show');clearTimeout(window.__simorghToastTimer);window.__simorghToastTimer=setTimeout(()=>t.classList.remove('show'),10000);}
 
 // ============================================
 // AUDIO MANAGER — مدیریت فایل‌های صوتی آپلود‌شده
