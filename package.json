@@ -3,8 +3,9 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "sync": "npx cap sync android",
-    "build:android": "cd android && gradle --no-daemon assembleDebug"
+    "prepare:apk": "node scripts/prepare-apk.mjs",
+    "sync": "npm run prepare:apk && npx cap sync android",
+    "build:android": "npm run sync && cd android && ./gradlew --no-daemon assembleDebug"
   },
   "dependencies": {
     "@capacitor/android": "^7.0.0",
@@ -12,6 +13,8 @@
   },
   "devDependencies": {
     "@capacitor/cli": "^7.0.0",
+    "acorn": "^8.18.0",
+    "javascript-obfuscator": "^5.8.0",
     "typescript": "^7.0.2"
   }
 }

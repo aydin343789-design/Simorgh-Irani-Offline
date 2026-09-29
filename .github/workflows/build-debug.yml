@@ -12,6 +12,17 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v5
 
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install Node dependencies
+        run: npm ci
+
+      - name: Sync Capacitor assets and plugins
+        run: npm run sync
+
       - name: Set up JDK 17
         uses: actions/setup-java@v5
         with:
