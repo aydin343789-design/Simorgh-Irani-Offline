@@ -228,7 +228,7 @@ public class SimorghSpeechPlugin extends Plugin {
         }
     }
 
-    private void play(GeneratedAudio audio) throws InterruptedException {
+    private void play(GeneratedAudio audio) throws IOException, InterruptedException {
         float[] samples = audio.getSamples();
         short[] pcm = new short[samples.length];
         for (int i = 0; i < samples.length; i++) pcm[i] = (short) (Math.max(-1f, Math.min(1f, samples[i])) * 32767f);
