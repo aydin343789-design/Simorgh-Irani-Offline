@@ -1,0 +1,8 @@
+{
+  "appId": "ir.simorgh.irani",
+  "appName": "SIMURGH",
+  "webDir": "dist",
+  "android": {
+    "backgroundColor": "#0b1020"
+  }
+}

@@ -1,0 +1,18 @@
+node_modules/
+dist/
+.gradle/
+android/.gradle/
+android/app/build/
+
+# Large binary files (download from GitHub Releases)
+android/app/src/main/assets/tts/tts-fa.zip
+android/app/src/main/assets/tts/tts-en.zip
+android/app/src/main/jniLibs/x86/
+android/app/src/main/jniLibs/x86_64/
+android/app/src/main/jniLibs/armeabi-v7a/
+
+# Archive files
+*.zip
+token.txt
+.git.bak/
+.git.bak
