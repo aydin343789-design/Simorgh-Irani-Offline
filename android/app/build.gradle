@@ -57,6 +57,7 @@ repositories {
     flatDir{
         dirs '../capacitor-cordova-android-plugins/src/main/libs', 'libs'
     }
+    mavenCentral()
 }
 
 dependencies {
@@ -69,6 +70,9 @@ dependencies {
     androidTestImplementation "androidx.test.ext:junit:$androidxJunitVersion"
     androidTestImplementation "androidx.test.espresso:espresso-core:$androidxEspressoCoreVersion"
     implementation project(':capacitor-cordova-android-plugins')
+    
+    // Sherpa ONNX TTS - برای صدا
+    implementation "com.k2fsa:sherpa-onnx:1.13.8"
 }
 
 apply from: 'capacitor.build.gradle'
