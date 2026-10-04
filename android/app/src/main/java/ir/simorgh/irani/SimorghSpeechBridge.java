@@ -3,6 +3,7 @@ package ir.simorgh.irani;
 import android.media.AudioFormat;
 import android.media.AudioManager;
 import android.media.AudioTrack;
+import android.os.SystemClock;
 import android.webkit.JavascriptInterface;
 import android.webkit.WebView;
 
@@ -187,9 +188,23 @@ public final class SimorghSpeechBridge {
             track.play();
             int offset = 0;
             while (offset < pcm.length && !destroyed && track.getPlayState() != AudioTrack.PLAYSTATE_STOPPED) {
-                int count = track.write(pcm, offset, Math.min(4096, pcm.length - offset));
+                int count = track.write(pcm, offset, Math.min(4096, pcm.length - offset), AudioTrack.WRITE_BLOCKING);
                 if (count < 0) throw new IOException("audio_track_write_failed");
+                if (count == 0) {
+                    SystemClock.sleep(4);
+                    continue;
+                }
                 offset += count;
+            }
+            // AudioTrack.write() only queues PCM. Calling stop() immediately after
+            // the last write cuts playback at the first buffer (often "ap" from
+            // "apple"). Wait until the hardware has consumed every frame. There
+            // is intentionally no fixed per-word timeout; long words/sentences
+            // are allowed to finish naturally, while stop() still interrupts it.
+            while (!destroyed
+                    && track.getPlayState() == AudioTrack.PLAYSTATE_PLAYING
+                    && track.getPlaybackHeadPosition() < pcm.length) {
+                SystemClock.sleep(10);
             }
         } finally {
             try { track.stop(); } catch (Exception ignored) { }

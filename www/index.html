@@ -8723,8 +8723,8 @@ function translatorFailureDetails(error){
   const code=String(error&&error.message||error||'');
   if(code.includes('models_not_downloaded')){
     return {
-      status:'مدل ترجمه آماده نیست؛ ابتدا دریافت مدل‌ها را کامل کن',
-      output:'برای ترجمهٔ جمله‌های آزاد، یک‌بار مدل‌های فارسی و انگلیسی را با هر اینترنت در دسترس دریافت کن. بعد از نصب، ترجمه کاملاً آفلاین است.'
+      status:'مدل ترجمه هنوز نصب نشده است',
+      output:'دریافت مدل‌ها کامل نشده است. روی دکمهٔ «دریافت مدل‌های آفلاین» بزن و تا نمایش پیام «مدل‌ها نصب‌اند» صبر کن؛ هیچ مرحلهٔ دیگری لازم نیست.'
     };
   }
   if(code.includes('input_too_long')){

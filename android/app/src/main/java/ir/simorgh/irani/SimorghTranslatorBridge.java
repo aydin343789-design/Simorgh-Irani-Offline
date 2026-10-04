@@ -2,6 +2,8 @@ package ir.simorgh.irani;
 
 import android.webkit.JavascriptInterface;
 import android.webkit.WebView;
+import android.os.Handler;
+import android.os.Looper;
 
 import com.google.android.gms.tasks.Task;
 import com.google.android.gms.tasks.Tasks;
@@ -79,7 +81,11 @@ public final class SimorghTranslatorBridge {
         Tasks.whenAllComplete(persianTask, englishTask).addOnCompleteListener(ignored -> {
             downloading = false;
             if (persianTask.isSuccessful() && englishTask.isSuccessful()) {
-                refreshInstalledModels(true);
+                // Play services can finish the download task before its model
+                // registry becomes visible to getDownloadedModels(). Give it a
+                // short settle window instead of reporting a false failure.
+                new Handler(Looper.getMainLooper()).postDelayed(
+                        () -> refreshInstalledModels(true), 1500L);
                 return;
             }
             emitStatus("دریافت مدل ترجمه کامل نشد: " + downloadError(persianTask, englishTask)
@@ -167,8 +173,18 @@ public final class SimorghTranslatorBridge {
     }
 
     private void updateInstalledModels(Set<TranslateRemoteModel> models) {
-        persianInstalled = models.contains(persianModel());
-        englishInstalled = models.contains(englishModel());
+        // Do not rely on object equality here. Some Google Play services
+        // versions return remote-model instances with the same language but a
+        // different internal backend-name object.
+        persianInstalled = hasLanguageModel(models, PERSIAN);
+        englishInstalled = hasLanguageModel(models, ENGLISH);
+    }
+
+    private static boolean hasLanguageModel(Set<TranslateRemoteModel> models, String language) {
+        for (TranslateRemoteModel model : models) {
+            if (language.equals(model.getLanguage())) return true;
+        }
+        return false;
     }
 
     private static TranslateRemoteModel persianModel() {
@@ -213,9 +229,10 @@ public final class SimorghTranslatorBridge {
 
     private static String safeMessage(Exception error) {
         if (error == null || error.getMessage() == null || error.getMessage().trim().isEmpty()) {
-            return "unknown_error";
+            return error == null ? "unknown_error" : error.getClass().getSimpleName();
         }
-        return error.getMessage().replace("\n", " ").replace("\r", " ");
+        return (error.getClass().getSimpleName() + ": " + error.getMessage())
+                .replace("\n", " ").replace("\r", " ");
     }
 
     private static String downloadError(Task<Void> persianTask, Task<Void> englishTask) {
