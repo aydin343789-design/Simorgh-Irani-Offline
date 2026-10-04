@@ -627,9 +627,9 @@ body{background:var(--p-bg)}
 <button class="back-btn" onclick="showScreen('homeScreen','right')">→ بازگشت</button>
 <div class="translator-hero">
   <h2>🌐 مترجم فارسی ↔ انگلیسی</h2>
-  <p>کلمه یا جمله را وارد کن. برای ترجمهٔ کامل، مدل‌های فارسی و انگلیسی فقط یک‌بار با تأیید تو و با هر اینترنت در دسترس دریافت می‌شوند؛ پس از آن ترجمه روی گوشی و بدون اینترنت انجام می‌شود.</p>
-  <div class="translator-status"><span class="translator-dot" id="translatorDot"></span><span id="translatorStatus">در حال بررسی موتور ترجمه...</span></div>
-  <button class="translator-action" onclick="downloadTranslatorModels()">⬇️ دریافت مدل‌های آفلاین (حدود ۶۰ مگابایت)</button>
+  <p>ترجمه به‌صورت پیش‌فرض آنلاین و رایگان انجام می‌شود. اگر ترجمهٔ بدون اینترنت می‌خواهی، می‌توانی موتور آفلاین را جداگانه دریافت کنی.</p>
+  <div class="translator-status"><span class="translator-dot" id="translatorDot"></span><span id="translatorStatus">ترجمهٔ آنلاین آماده است</span></div>
+  <button class="translator-action" onclick="downloadTranslatorModels()">⬇️ فعال‌سازی موتور ترجمهٔ آفلاین</button>
 </div>
 <div class="translator-controls">
   <select class="translator-lang" id="translatorFrom">
@@ -8625,8 +8625,8 @@ function showTranslator(){
   document.getElementById('menuBtn')?.classList.remove('active');
 }
 function detectTranslatorEngine(){
+  if(navigator.onLine)setTranslatorStatus('ترجمهٔ آنلاین رایگان آماده است؛ متن برای ترجمه به سرویس آنلاین ارسال می‌شود','ready');
   if(window.AndroidTranslator&&typeof window.AndroidTranslator.refreshStatus==='function'){
-    setTranslatorStatus('در حال بررسی مدل ترجمه روی گوشی...','busy');
     try{window.AndroidTranslator.refreshStatus();return;}catch(e){}
   }
   if(window.AndroidTranslator&&typeof window.AndroidTranslator.isReady==='function'){
@@ -8644,13 +8644,15 @@ function detectTranslatorEngine(){
 
 function nativeTranslatorStatus(message,ready,error){
   if(error){
+    if(navigator.onLine){setTranslatorStatus('ترجمهٔ آنلاین رایگان آماده است؛ موتور آفلاین نصب نیست','ready');return;}
     setTranslatorStatus(message||'دریافت مدل ترجمه ناموفق بود','');
     return;
   }
   if(ready){
-    setTranslatorStatus('مدل ترجمه فارسی آماده است؛ ترجمه کاملاً آفلاین است','ready');
+    setTranslatorStatus(navigator.onLine?'ترجمهٔ آنلاین آماده است؛ آفلاین هم فعال است':'موتور ترجمهٔ آفلاین آماده است','ready');
   }else{
-    setTranslatorStatus(message||'در حال آماده‌سازی موتور ترجمه...','busy');
+    if(navigator.onLine){setTranslatorStatus('ترجمهٔ آنلاین رایگان آماده است؛ آفلاین اختیاری است','ready');}
+    else setTranslatorStatus(message||'در حال آماده‌سازی موتور ترجمه...','busy');
   }
 }
 window.nativeTranslatorStatus=nativeTranslatorStatus;
@@ -8672,6 +8674,29 @@ function speakTranslation(){
   const target=document.getElementById('translatorTo').value;
   if(target==='fa'){showToast('ℹ️ صدای داخلی فعلاً فقط برای انگلیسی فعال است');return;}
   speakEmbeddedTTS(translatorLastResult,0.85);
+}
+
+function splitMyMemoryText(text){
+  const limit=460,parts=[];let part='';
+  for(const ch of String(text||'')){
+    const candidate=part+ch;
+    if(new TextEncoder().encode(candidate).length>limit&&part){parts.push(part);part=ch;}else part=candidate;
+  }
+  if(part)parts.push(part);
+  return parts;
+}
+async function translateOnlineMyMemory(text,from,to){
+  if(!navigator.onLine)throw new Error('online-unavailable');
+  const chunks=splitMyMemoryText(text),results=[];
+  for(const chunk of chunks){
+    const url='https://api.mymemory.translated.net/get?q='+encodeURIComponent(chunk)+'&langpair='+encodeURIComponent(from+'|'+to)+'&mt=1';
+    const response=await fetch(url,{method:'GET',cache:'no-store'});
+    if(!response.ok)throw new Error('online-http-'+response.status);
+    const data=await response.json();
+    if(Number(data.responseStatus)!==200||!data.responseData||!String(data.responseData.translatedText||'').trim())throw new Error('online-api-failed');
+    results.push(String(data.responseData.translatedText).trim());
+  }
+  return results.join(' ').replace(/\s+([,.!?؟،])/g,'$1').trim();
 }
 
 function lookupLocalTranslation(text,from,to){
@@ -8721,6 +8746,12 @@ function isCompleteLocalTranslation(result,sourceLanguage){
 }
 function translatorFailureDetails(error){
   const code=String(error&&error.message||error||'');
+  if(code.includes('online-')){
+    return {
+      status:'ترجمهٔ آنلاین در دسترس نبود',
+      output:'سرویس آنلاین پاسخ نداد. اینترنت را بررسی کن؛ اگر موتور آفلاین را نصب کرده‌ای، دوباره تلاش می‌کنیم ترجمه روی گوشی انجام شود.'
+    };
+  }
   if(code.includes('models_not_downloaded')){
     return {
       status:'مدل ترجمه هنوز نصب نشده است',
@@ -8749,12 +8780,26 @@ async function translateText(){
   const text=input?.value.trim();if(!text){showToast('✍️ ابتدا متن را وارد کن');return;}
   const from=document.getElementById('translatorFrom').value,to=document.getElementById('translatorTo').value;
   if(from===to){setTranslatorOutput(text);return;}
-  setTranslatorStatus('در حال ترجمه روی دستگاه...','busy');
+  setTranslatorStatus(navigator.onLine?'در حال ترجمهٔ آنلاین...':'اینترنت در دسترس نیست؛ در حال بررسی موتور آفلاین...','busy');
   setTranslatorOutput('');
 
   let nativeError=null;
-  // Prefer the complete sentence model when the APK bridge is available. The
-  // phrasebook remains a fast fallback for known phrases only.
+  let onlineError=null;
+  // Online is the default path. It avoids Google Play Services model
+  // downloads and is available immediately when connected.
+  if(navigator.onLine){
+    try{
+      const result=await translateOnlineMyMemory(text,from,to);
+      if(result){
+        setTranslatorOutput(result);buildTranslationLesson(text,result,from,to);saveTranslationHistory(text,result,from,to);
+        setTranslatorStatus('ترجمهٔ آنلاین رایگان انجام شد','ready');
+        return;
+      }
+      onlineError=new Error('online-api-failed');
+    }catch(e){onlineError=e;}
+  }
+
+  // If online translation is unavailable, use a downloaded on-device engine.
   if(window.AndroidTranslator&&typeof window.AndroidTranslator.translateAsync==='function'){
     try{
       const result=await translateWithNativeEngine(text,from,to);
@@ -8776,26 +8821,13 @@ async function translateText(){
     return;
   }
 
-  const detail=translatorFailureDetails(nativeError);
+  const detail=translatorFailureDetails(onlineError||nativeError);
   setTranslatorStatus(detail.status,'');
   setTranslatorOutput(detail.output);
 }
 function downloadTranslatorModels(){
-  if(!(window.AndroidTranslator&&typeof window.AndroidTranslator.prepareModels==='function')){
-    setTranslatorStatus('این قابلیت فقط در APK فعال است','');
-    return;
-  }
-  const approved=window.confirm('مدل‌های فارسی و انگلیسی ترجمه روی دستگاه دریافت می‌شوند (در مجموع حدود ۶۰ مگابایت). دانلود با هر اینترنت در دسترس، Wi‑Fi یا دادهٔ همراه انجام می‌شود و پس از نصب ترجمه بدون اینترنت است. ادامه می‌دهی؟');
-  if(!approved){
-    setTranslatorStatus('دریافت مدل لغو شد؛ عبارت‌نامهٔ داخلی همچنان در دسترس است','');
-    return;
-  }
-  setTranslatorStatus('در حال دریافت مدل‌های ترجمه با اینترنت موجود...','busy');
-  try{window.AndroidTranslator.prepareModels();}
-  catch(e){
-    const detail=translatorFailureDetails(e);
-    setTranslatorStatus(detail.status,'');
-  }
+  setTranslatorStatus('موتور آفلاین Argos در حال آماده‌سازی است؛ فعلاً ترجمهٔ آنلاین رایگان فعال است','');
+  setTranslatorOutput('برای استفادهٔ معمول، اینترنت را روشن نگه دار و دکمهٔ ترجمه را بزن. نسخهٔ آفلاین مستقل از Google Play services در حال جایگزینی موتور قبلی است.');
 }
 
 // ============================================
