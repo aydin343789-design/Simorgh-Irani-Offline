@@ -29,9 +29,12 @@ const checks = [
   ['language-based model detection', bridge.includes('model.getLanguage()')],
   ['bounded model download', bridge.includes('Tasks.withTimeout') && bridge.includes('MODEL_DOWNLOAD_TIMEOUT_SECONDS')],
   ['native result callback', bridge.includes('window.__nativeTranslatorCallback')],
-  ['explicit model confirmation', html.includes('window.confirm(')],
-  ['native-first sentence translation', html.indexOf('await translateWithNativeEngine') < html.indexOf('const localResult=lookupLocalTranslation')],
+  ['online privacy disclosure', html.includes('ترجمهٔ آنلاین رایگان') && html.includes('سرویس آنلاین')],
+  ['on-device fallback before phrasebook', html.indexOf('await translateWithNativeEngine') < html.indexOf('const localResult=lookupLocalTranslation')],
   ['mixed-result guard', html.includes('function isCompleteLocalTranslation')],
+  ['free online translation API', html.includes('api.mymemory.translated.net/get') && html.includes('translateOnlineMyMemory')],
+  ['online-first translation', html.indexOf('await translateOnlineMyMemory') < html.indexOf('await translateWithNativeEngine')],
+  ['online fallback to offline', html.includes("onlineError||nativeError")],
   ['no Maven Sherpa dependency', !gradle.includes('sherpa-onnx')],
 ];
 
