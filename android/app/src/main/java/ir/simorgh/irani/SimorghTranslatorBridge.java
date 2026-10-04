@@ -4,6 +4,7 @@ import android.webkit.JavascriptInterface;
 import android.webkit.WebView;
 import android.os.Handler;
 import android.os.Looper;
+import android.util.Log;
 
 import com.google.android.gms.tasks.Task;
 import com.google.android.gms.tasks.Tasks;
@@ -27,6 +28,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * on-device. This bridge exposes no filesystem, intent, or arbitrary-code API.
  */
 public final class SimorghTranslatorBridge {
+    private static final String TAG = "SimorghTranslator";
     private static final String PERSIAN = "fa";
     private static final String ENGLISH = "en";
     private static final int MAX_INPUT_LENGTH = 5_000;
@@ -73,21 +75,29 @@ public final class SimorghTranslatorBridge {
         downloading = true;
         emitStatus("در حال دریافت مدل‌های فارسی و انگلیسی با اینترنت موجود…", false, false);
 
-        DownloadConditions anyNetwork = new DownloadConditions.Builder()
-                .build();
-        Task<Void> persianTask = modelManager.download(persianModel(), anyNetwork);
-        Task<Void> englishTask = modelManager.download(englishModel(), anyNetwork);
+        DownloadConditions anyNetwork = new DownloadConditions.Builder().build();
+        Translator faToEn = Translation.getClient(translatorOptions(PERSIAN, ENGLISH));
+        Translator enToFa = Translation.getClient(translatorOptions(ENGLISH, PERSIAN));
+        // downloadModelIfNeeded() is the supported API for the exact translator
+        // pair. RemoteModelManager.download() can complete while the Play
+        // services model registry is still stale, which caused a false
+        // "not installed" result on some phones.
+        Task<Void> persianTask = faToEn.downloadModelIfNeeded(anyNetwork);
+        Task<Void> englishTask = enToFa.downloadModelIfNeeded(anyNetwork);
 
         Tasks.whenAllComplete(persianTask, englishTask).addOnCompleteListener(ignored -> {
             downloading = false;
+            faToEn.close();
+            enToFa.close();
             if (persianTask.isSuccessful() && englishTask.isSuccessful()) {
-                // Play services can finish the download task before its model
-                // registry becomes visible to getDownloadedModels(). Give it a
-                // short settle window instead of reporting a false failure.
-                new Handler(Looper.getMainLooper()).postDelayed(
-                        () -> refreshInstalledModels(true), 1500L);
+                persianInstalled = true;
+                englishInstalled = true;
+                modelsChecked = true;
+                Log.i(TAG, "Translation models downloaded: fa and en");
+                emitStatus("مدل‌های فارسی و انگلیسی با موفقیت نصب شدند؛ ترجمه بدون اینترنت آماده است.", true, false);
                 return;
             }
+            Log.e(TAG, "Translation model download failed: " + downloadError(persianTask, englishTask));
             emitStatus("دریافت مدل ترجمه کامل نشد: " + downloadError(persianTask, englishTask)
                     + ". اتصال اینترنت و Google Play services را بررسی کن.", false, true);
         });
@@ -129,17 +139,16 @@ public final class SimorghTranslatorBridge {
             return;
         }
 
-        TranslatorOptions options = new TranslatorOptions.Builder()
-                .setSourceLanguage(from)
-                .setTargetLanguage(to)
-                .build();
+        TranslatorOptions options = translatorOptions(from, to);
         Translator translator = Translation.getClient(options);
         translator.translate(text.trim())
                 .addOnSuccessListener(result -> {
+                    Log.i(TAG, "Translation succeeded: " + from + "->" + to);
                     translator.close();
                     emitCallback(callbackId, result, "");
                 })
                 .addOnFailureListener(error -> {
+                    Log.e(TAG, "Translation failed: " + from + "->" + to, error);
                     translator.close();
                     emitCallback(callbackId, "", "translation_failed:" + safeMessage(error));
                 });
@@ -193,6 +202,13 @@ public final class SimorghTranslatorBridge {
 
     private static TranslateRemoteModel englishModel() {
         return new TranslateRemoteModel.Builder(ENGLISH).build();
+    }
+
+    private static TranslatorOptions translatorOptions(String from, String to) {
+        return new TranslatorOptions.Builder()
+                .setSourceLanguage(from)
+                .setTargetLanguage(to)
+                .build();
     }
 
     private static boolean isSupportedLanguage(String language) {
