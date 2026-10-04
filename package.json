@@ -5,7 +5,8 @@
   "scripts": {
     "prepare:apk": "node scripts/prepare-apk.mjs",
     "sync": "npm run prepare:apk && npx cap sync android",
-    "build:android": "npm run sync && cd android && ./gradlew --no-daemon assembleDebug"
+    "build:android": "npm run sync && cd android && ./gradlew --no-daemon assembleDebug",
+    "verify:translator": "node scripts/verify-translator.mjs"
   },
   "dependencies": {
     "@capacitor/android": "^7.0.0",

@@ -1,38 +1,57 @@
 # Offline Language Features — Acceptance Tests
 
-## Translator (all checks can run without Internet)
+## Preconditions
 
-1. Install the APK, then disable Wi‑Fi and mobile data before opening it.
-2. Open **مترجم آفلاین فارسی ↔ انگلیسی**.
-3. Test known phrases in both directions:
-   - `hello` → `سلام`
-   - `Hello, how are you?` → `سلام، حالت چطوره؟`
-   - `سلام حالت چطوره` → `hello, how are you?`
-   - `thank you` → `متشکرم`
-   - `ممنون` → `thank you`
-4. Test a vocabulary word already included in the lessons, such as `apple` ↔ `سیب`.
-5. Test an unknown sentence. The app should say it is not in the offline dictionary and must not send it to a network service.
-6. Restart the app while still offline; known translations and local translation history should remain available.
+1. Install the APK on an Android arm64 device with current Google Play services.
+2. Confirm Wi‑Fi is available for the one-time ML Kit translation-model download.
+3. No Android TTS voice or browser voice setting is required for the English speech tests.
 
-## Speech playback
+## Translator — first-time setup
 
-1. In Android Text-to-speech settings, confirm whether the device has installed offline English and Persian voices.
-2. Open an English flashcard and tap the speaker; it should speak the English word.
-3. Flip the card and tap its speaker; it should speak the Persian word. Tap **مثال انگلیسی** to hear its example.
-4. Open a translation result and tap **خواندن ترجمه**; it should choose Persian or English from the text script.
-5. Open conversation practice and test the separate English and Persian speaker buttons.
-6. If a local voice for a language is unavailable, the app should explain that and must not fall back to a network voice.
-7. Repeat with Internet disabled; playback should work for voices reported as offline by Android.
+1. Open **مترجم فارسی ↔ انگلیسی**.
+2. Verify the initial status states that translation models are not installed.
+3. Tap **دریافت مدل‌های آفلاین**.
+4. Confirm the dialog that states the approximate total download size (about 60 MB) and Wi‑Fi-only condition.
+5. Confirm the status changes to ready only after both Persian and English models have downloaded.
+6. Turn off Wi‑Fi and mobile data, then reopen the translator. Its status must still show that on-device translation is ready.
 
-## Conversation practice
+## Translator — offline operation
 
-- The greetings, cafe, directions, shopping, and travel scenarios render in both languages.
-- Topic buttons change the selected dialogue.
-- English and Persian audio buttons use the corresponding local voice independently.
+With Wi‑Fi and mobile data disabled, verify both directions:
 
-## APK packaging and obfuscation
+| Input | Direction | Expected behavior |
+|---|---|---|
+| `Hello, how are you?` | English → Persian | Complete Persian sentence; no English words leaked into the result |
+| `I love learning English.` | English → Persian | Complete Persian translation |
+| `سلام، حالت چطوره؟` | Persian → English | Complete English sentence |
+| `من عاشق یادگیری زبان انگلیسی هستم.` | Persian → English | Complete English translation |
+| `thank you` | English → Persian | `ممنون` or a natural Persian equivalent |
+| `کرایه ماشین چقدر است؟` | Persian → English | Complete English question |
 
-1. Run `npm ci` and `npm run sync`.
-2. Confirm `dist/index.html` and `android/app/src/main/assets/public/index.html` are generated from the source and contain obfuscated inline scripts.
-3. Build the debug APK using `cd android && ./gradlew assembleDebug`.
-4. Confirm R8 is enabled for debug/release. Obfuscation should make extraction less readable; it is not a guarantee against reverse engineering.
+Also verify that copying, local history, restart persistence and the selected result language work as expected.
+
+## Independent English voice
+
+1. Install the APK on a clean device with Android TTS disabled or with no TTS voice installed.
+2. Open an English flashcard and tap the speaker. It must produce the bundled **Piper Amy** female English voice.
+3. Verify that the first run extracts the internal asset and that later runs remain offline.
+4. Disable network access and repeat speech. Playback must still work.
+5. Tap speech twice quickly. The previous `AudioTrack` must stop before the next clip begins.
+6. Open a Persian flashcard or Persian translation result. The app must display that the embedded voice currently supports English only; it must not silently fall back to Android TTS or browser speech.
+7. If a user-uploaded audio file exists for a word, it may play before the embedded voice.
+
+## Behavior before translation models are installed
+
+1. Clear the app’s translation models through Android app data reset, then open the translator without network access.
+2. Test a known phrase such as `hello`; the local phrasebook may answer it.
+3. Test a sentence outside the phrasebook such as `I love learning English.`
+4. The UI must ask the user to download models; it **must not** display a mixed result such as `I Love دارم` as a completed translation.
+
+## Build verification
+
+1. Run `npm ci`, `npm run verify:translator` and `npm run sync`.
+2. Confirm `dist/index.html` and `android/app/src/main/assets/public/index.html` are generated from `www/index.html`.
+3. Build with `cd android && ./gradlew assembleDebug`.
+4. Confirm R8 is enabled for debug and release and only `arm64-v8a` is packaged.
+5. Run `unzip -l app-debug.apk` and verify the APK contains `assets/tts/tts-en.zip` and does not contain `tts-fa.zip`, `speechSynthesis`, or Android TTS code.
+6. Verify the APK contains the Sherpa/ONNX native libraries and the internal voice asset; no network fetch is needed for speech.

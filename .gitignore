@@ -3,15 +3,15 @@ node_modules/
 android/.gradle/
 android/app/build/
 
-# Large binary files (download from GitHub Releases)
+# Optional large binary files that are downloaded by release tooling
 android/app/src/main/assets/tts/tts-fa.zip
-android/app/src/main/assets/tts/tts-en.zip
 android/app/src/main/jniLibs/x86/
 android/app/src/main/jniLibs/x86_64/
 android/app/src/main/jniLibs/armeabi-v7a/
 
 # Archive files
 *.zip
+!android/app/src/main/assets/tts/tts-en.zip
 token.txt
 .git.bak/
 .git.bak
