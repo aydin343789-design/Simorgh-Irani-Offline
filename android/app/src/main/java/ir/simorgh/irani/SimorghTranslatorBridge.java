@@ -21,7 +21,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * Narrow JavaScript bridge used only by the bundled Capacitor WebView.
  *
  * ML Kit models are deliberately downloaded only after a user action in the
- * web UI, on Wi-Fi. Once both models are installed, translation is entirely
+ * web UI, using any available network connection. Once both models are installed, translation is entirely
  * on-device. This bridge exposes no filesystem, intent, or arbitrary-code API.
  */
 public final class SimorghTranslatorBridge {
@@ -56,8 +56,8 @@ public final class SimorghTranslatorBridge {
     }
 
     /**
-     * Starts the one-time, user-confirmed download. DownloadConditions forces
-     * Wi-Fi so cellular data is not consumed unexpectedly.
+     * Starts the one-time, user-confirmed download using the currently available
+     * network (Wi-Fi or mobile data).
      */
     @JavascriptInterface
     public void prepareModels() {
@@ -69,13 +69,12 @@ public final class SimorghTranslatorBridge {
             return;
         }
         downloading = true;
-        emitStatus("در حال دریافت مدل‌های فارسی و انگلیسی از طریق Wi‑Fi…", false, false);
+        emitStatus("در حال دریافت مدل‌های فارسی و انگلیسی با اینترنت موجود…", false, false);
 
-        DownloadConditions wifiOnly = new DownloadConditions.Builder()
-                .requireWifi()
+        DownloadConditions anyNetwork = new DownloadConditions.Builder()
                 .build();
-        Task<Void> persianTask = modelManager.download(persianModel(), wifiOnly);
-        Task<Void> englishTask = modelManager.download(englishModel(), wifiOnly);
+        Task<Void> persianTask = modelManager.download(persianModel(), anyNetwork);
+        Task<Void> englishTask = modelManager.download(englishModel(), anyNetwork);
 
         Tasks.whenAllComplete(persianTask, englishTask).addOnCompleteListener(ignored -> {
             downloading = false;
@@ -83,7 +82,8 @@ public final class SimorghTranslatorBridge {
                 refreshInstalledModels(true);
                 return;
             }
-            emitStatus("دریافت مدل ترجمه کامل نشد. اتصال Wi‑Fi و Google Play services را بررسی کن.", false, true);
+            emitStatus("دریافت مدل ترجمه کامل نشد: " + downloadError(persianTask, englishTask)
+                    + ". اتصال اینترنت و Google Play services را بررسی کن.", false, true);
         });
     }
 
@@ -156,7 +156,7 @@ public final class SimorghTranslatorBridge {
                     if (isReady()) {
                         emitStatus("مدل‌های فارسی و انگلیسی نصب‌اند؛ ترجمه بدون اینترنت انجام می‌شود.", true, false);
                     } else {
-                        emitStatus("مدل ترجمه نصب نشده است؛ برای فعال‌سازی، یک‌بار با Wi‑Fi مدل‌ها را دریافت کن.", false, false);
+                        emitStatus("مدل ترجمه نصب نشده است؛ برای فعال‌سازی، یک‌بار با اینترنت موجود مدل‌ها را دریافت کن.", false, false);
                     }
                 })
                 .addOnFailureListener(error -> {
@@ -216,5 +216,11 @@ public final class SimorghTranslatorBridge {
             return "unknown_error";
         }
         return error.getMessage().replace("\n", " ").replace("\r", " ");
+    }
+
+    private static String downloadError(Task<Void> persianTask, Task<Void> englishTask) {
+        if (!persianTask.isSuccessful()) return "فارسی: " + safeMessage(persianTask.getException());
+        if (!englishTask.isSuccessful()) return "انگلیسی: " + safeMessage(englishTask.getException());
+        return "خطای نامشخص";
     }
 }

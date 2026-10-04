@@ -15,8 +15,8 @@
   - The shared eSpeak data archive is used for phonemization.
 - Piper project page: https://github.com/rhasspy/piper
   - The original repository is archived and points to the moved project.
-- Piper voice catalog/model source: https://huggingface.co/rhasspy/piper-voices/tree/main/en/en_US/amy/low
+- Piper voice catalog/model source: https://huggingface.co/rhasspy/piper-voices/tree/main/en/en_US/amy/medium
   - Amy is the selected English female voice.
-  - The model is quantized to int8 in this project to reduce the packaged voice asset from roughly 63 MB to roughly 18.6 MB.
+- An int8 quantized Amy Low build was tested on a real phone but produced unacceptable articulation, so the app now packages the unquantized Amy Medium model for clearer speech. The voice archive is larger, but quality is prioritized over the failed aggressive quantization.
 - Piper voice samples: https://rhasspy.github.io/piper-samples/
   - Piper quality tiers include x_low, low, medium, and high; low is selected as the size/quality compromise.

@@ -23,7 +23,7 @@ const checks = [
   ['embedded Piper asset', await fileExists(resolve(root, 'android/app/src/main/assets/tts/tts-en.zip'))],
   ['no Android/browser TTS API', !html.includes('window.speechSynthesis') && !html.includes('SpeechSynthesisUtterance')],
   ['English-only speech route', speech.includes('embedded_english_voice_only')],
-  ['Wi-Fi-only model download', bridge.includes('.requireWifi()')],
+  ['any-network model download', bridge.includes('DownloadConditions') && !bridge.includes('.requireWifi()')],
   ['native result callback', bridge.includes('window.__nativeTranslatorCallback')],
   ['explicit model confirmation', html.includes('window.confirm(')],
   ['native-first sentence translation', html.indexOf('await translateWithNativeEngine') < html.indexOf('const localResult=lookupLocalTranslation')],

@@ -26,12 +26,12 @@ import java.util.concurrent.Executors;
 
 /**
  * Fully embedded English TTS. It never calls Android TTS or browser speechSynthesis.
- * The Piper Amy Low neural voice is packaged in the APK and executed through Sherpa-ONNX.
+ * The Piper Amy Medium neural voice is packaged in the APK and executed through Sherpa-ONNX.
  */
 public final class SimorghSpeechBridge {
     private static final String ASSET_ZIP = "tts/tts-en.zip";
-    private static final String MODEL_NAME = "en_US-amy-low.onnx";
-    private static final String ENGINE_NAME = "sherpa-onnx-piper-amy-low-int8";
+    private static final String MODEL_NAME = "en_US-amy-medium.onnx";
+    private static final String ENGINE_NAME = "sherpa-onnx-piper-amy-medium-fp32";
 
     private final WebView webView;
     private final ExecutorService executor = Executors.newSingleThreadExecutor();

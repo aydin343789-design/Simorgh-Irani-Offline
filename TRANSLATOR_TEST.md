@@ -3,7 +3,7 @@
 ## Preconditions
 
 1. Install the APK on an Android arm64 device with current Google Play services.
-2. Confirm Wi‑Fi is available for the one-time ML Kit translation-model download.
+2. Confirm either Wi‑Fi or mobile data is available for the one-time ML Kit translation-model download.
 3. No Android TTS voice or browser voice setting is required for the English speech tests.
 
 ## Translator — first-time setup
@@ -11,7 +11,7 @@
 1. Open **مترجم فارسی ↔ انگلیسی**.
 2. Verify the initial status states that translation models are not installed.
 3. Tap **دریافت مدل‌های آفلاین**.
-4. Confirm the dialog that states the approximate total download size (about 60 MB) and Wi‑Fi-only condition.
+4. Confirm the dialog that states the approximate total download size (about 60 MB) and permits Wi‑Fi or mobile data.
 5. Confirm the status changes to ready only after both Persian and English models have downloaded.
 6. Turn off Wi‑Fi and mobile data, then reopen the translator. Its status must still show that on-device translation is ready.
 
