@@ -2,8 +2,6 @@ package ir.simorgh.irani;
 
 import android.webkit.JavascriptInterface;
 import android.webkit.WebView;
-import android.os.Handler;
-import android.os.Looper;
 import android.util.Log;
 
 import com.google.android.gms.tasks.Task;
@@ -18,6 +16,7 @@ import com.google.mlkit.nl.translate.TranslatorOptions;
 import org.json.JSONObject;
 
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -32,6 +31,7 @@ public final class SimorghTranslatorBridge {
     private static final String PERSIAN = "fa";
     private static final String ENGLISH = "en";
     private static final int MAX_INPUT_LENGTH = 5_000;
+    private static final long MODEL_DOWNLOAD_TIMEOUT_SECONDS = 90L;
 
     private final WebView webView;
     private final RemoteModelManager modelManager;
@@ -82,8 +82,12 @@ public final class SimorghTranslatorBridge {
         // pair. RemoteModelManager.download() can complete while the Play
         // services model registry is still stale, which caused a false
         // "not installed" result on some phones.
-        Task<Void> persianTask = faToEn.downloadModelIfNeeded(anyNetwork);
-        Task<Void> englishTask = enToFa.downloadModelIfNeeded(anyNetwork);
+        Task<Void> persianTask = Tasks.withTimeout(
+                faToEn.downloadModelIfNeeded(anyNetwork),
+                MODEL_DOWNLOAD_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+        Task<Void> englishTask = Tasks.withTimeout(
+                enToFa.downloadModelIfNeeded(anyNetwork),
+                MODEL_DOWNLOAD_TIMEOUT_SECONDS, TimeUnit.SECONDS);
 
         Tasks.whenAllComplete(persianTask, englishTask).addOnCompleteListener(ignored -> {
             downloading = false;
@@ -98,8 +102,9 @@ public final class SimorghTranslatorBridge {
                 return;
             }
             Log.e(TAG, "Translation model download failed: " + downloadError(persianTask, englishTask));
-            emitStatus("دریافت مدل ترجمه کامل نشد: " + downloadError(persianTask, englishTask)
-                    + ". اتصال اینترنت و Google Play services را بررسی کن.", false, true);
+            emitStatus("دریافت مدل ترجمه در ۹۰ ثانیه کامل نشد: "
+                    + downloadError(persianTask, englishTask)
+                    + ". اتصال اینترنت، فضای خالی و Google Play services را بررسی کن و دوباره تلاش کن.", false, true);
         });
     }
 

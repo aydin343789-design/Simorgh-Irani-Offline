@@ -27,6 +27,7 @@ const checks = [
   ['English-only speech route', speech.includes('embedded_english_voice_only')],
   ['any-network model download', bridge.includes('DownloadConditions') && !bridge.includes('.requireWifi()')],
   ['language-based model detection', bridge.includes('model.getLanguage()')],
+  ['bounded model download', bridge.includes('Tasks.withTimeout') && bridge.includes('MODEL_DOWNLOAD_TIMEOUT_SECONDS')],
   ['native result callback', bridge.includes('window.__nativeTranslatorCallback')],
   ['explicit model confirmation', html.includes('window.confirm(')],
   ['native-first sentence translation', html.indexOf('await translateWithNativeEngine') < html.indexOf('const localResult=lookupLocalTranslation')],
