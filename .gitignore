@@ -1,15 +1,16 @@
 node_modules/
+__pycache__/
+*.py[cod]
+.cache/
+dist/
 .gradle/
 android/.gradle/
 android/app/build/
-
-# Large binary files (download from GitHub Releases)
-android/app/src/main/assets/tts/tts-fa.zip
+# Generated, checksum-verified offline TTS model asset; created for APK builds only.
 android/app/src/main/assets/tts/tts-en.zip
 android/app/src/main/jniLibs/x86/
 android/app/src/main/jniLibs/x86_64/
 android/app/src/main/jniLibs/armeabi-v7a/
-
 # Archive files
 *.zip
 token.txt

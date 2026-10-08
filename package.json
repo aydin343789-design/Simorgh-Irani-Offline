@@ -1,10 +1,11 @@
 {
   "name": "simorgh-irani-translator",
-  "version": "1.0.0",
+  "version": "1.3.0",
   "private": true,
   "scripts": {
+    "prepare:tts": "python3 scripts/prepare-tts-models.py",
     "prepare:apk": "node scripts/prepare-apk.mjs",
-    "sync": "npm run prepare:apk && npx cap sync android",
+    "sync": "npm run prepare:tts && npm run prepare:apk && npx cap sync android",
     "build:android": "npm run sync && cd android && ./gradlew --no-daemon assembleDebug"
   },
   "dependencies": {

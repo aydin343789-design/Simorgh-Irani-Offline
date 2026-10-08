@@ -23,4 +23,11 @@
 # Preserve Capacitor's annotation/reflection-based native plugin registration.
 -keepattributes RuntimeVisibleAnnotations,RuntimeInvisibleAnnotations,AnnotationDefault
 -keep @com.getcapacitor.annotation.CapacitorPlugin class ir.simorgh.irani.SimorghSpeechPlugin { *; }
+-keep @com.getcapacitor.annotation.CapacitorPlugin class ir.simorgh.irani.SimorghTranslationPlugin { *; }
 -keep class ir.simorgh.irani.MainActivity { *; }
+
+# Sherpa-ONNX uses JNI and Java reflection for model configuration.
+-keep class com.k2fsa.sherpa.onnx.** { *; }
+-keepclasseswithmembernames,includedescriptorclasses class * {
+    native <methods>;
+}

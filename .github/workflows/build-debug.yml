@@ -17,10 +17,15 @@ jobs:
         with:
           node-version: '22'
 
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
       - name: Install Node dependencies
         run: npm ci
 
-      - name: Sync Capacitor assets and plugins
+      - name: Prepare model and sync Capacitor assets
         run: npm run sync
 
       - name: Set up JDK 21
@@ -34,7 +39,7 @@ jobs:
         with:
           gradle-version: '8.13'
 
-      - name: Validate Android project files
+      - name: Validate Android project and model assets
         shell: bash
         run: |
           test -f android/settings.gradle
@@ -43,12 +48,17 @@ jobs:
           test -f android/app/src/main/AndroidManifest.xml
           test -f android/app/src/main/java/ir/simorgh/irani/MainActivity.java
           test -f android/app/src/main/assets/public/index.html
+          test -s android/app/src/main/assets/tts/tts-en.zip
+          unzip -tq android/app/src/main/assets/tts/tts-en.zip
           test -f android/app/src/main/res/mipmap-mdpi/ic_launcher.png
           test -f android/app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml
 
       - name: Build debug APK
         working-directory: android
         run: gradle --no-daemon --stacktrace assembleDebug
+
+      - name: Verify APK contains English offline TTS
+        run: unzip -l android/app/build/outputs/apk/debug/app-debug.apk | grep -F 'assets/tts/tts-en.zip'
 
       - name: Upload APK
         uses: actions/upload-artifact@v4

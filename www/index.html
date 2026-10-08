@@ -415,7 +415,7 @@ body{background:var(--p-bg)}
 
     <section class="pro-page" id="proGrammar"><button class="pro-back" onclick="proShow('proPractice')">→ بازگشت</button><div class="pro-title">📐 گرامر تعاملی</div><div class="pro-sub">به‌جای حفظ کردن، قاعده را در یک جمله تمرین کن.</div><div id="grammarBox"></div></section>
 
-    <section class="pro-page" id="proConversation"><button class="pro-back" onclick="proShow('proPractice')">→ بازگشت</button><div class="pro-title">💬 مکالمه آفلاین</div><div class="pro-sub">سناریو را انتخاب کن و جمله‌های کاربردی را با صدای دستگاه تمرین کن.</div><div id="scenarioList"></div></section>
+    <section class="pro-page" id="proConversation"><button class="pro-back" onclick="proShow('proPractice')">→ بازگشت</button><div class="pro-title">💬 مکالمه آفلاین</div><div class="pro-sub">سناریو را انتخاب کن و جمله‌های انگلیسی را با موتور صوتی داخلی تمرین کن.</div><div id="scenarioList"></div></section>
 
     <section class="pro-page" id="proListening"><button class="pro-back" onclick="proShow('proPractice')">→ بازگشت</button><div class="pro-title">🎧 Listening</div><div class="pro-sub">یک واژه یا جمله را بشنو، سپس معنی درست را انتخاب کن.</div><div id="listenBox"></div></section>
   </div>
@@ -627,9 +627,9 @@ body{background:var(--p-bg)}
 <button class="back-btn" onclick="showScreen('homeScreen','right')">→ بازگشت</button>
 <div class="translator-hero">
   <h2>🌐 مترجم فارسی ↔ انگلیسی</h2>
-  <p>کلمه یا جمله را وارد کن. ترجمهٔ فارسی ↔ انگلیسی با واژگان و قواعد آفلاین داخلی انجام می‌شود؛ در APK، اگر موتور ترجمهٔ روی دستگاه فعال باشد، برای جمله‌های پیچیده‌تر از آن هم استفاده می‌شود.</p>
+  <p>عبارت‌های ساده با واژه‌نامهٔ داخلی و جمله‌های آزاد با مدل آفلاین روی دستگاه ترجمه می‌شوند. برای ترجمهٔ کامل جمله‌ها، مدل فارسی را یک‌بار با تأیید خودت و فقط از طریق Wi‑Fi دریافت کن.</p>
   <div class="translator-status"><span class="translator-dot" id="translatorDot"></span><span id="translatorStatus">در حال بررسی موتور ترجمه...</span></div>
-  <button class="translator-action" onclick="downloadTranslatorModels()">⬇️ دریافت/به‌روزرسانی مدل‌های ترجمه</button>
+  <button class="translator-action" onclick="downloadTranslatorModels()">⬇️ دریافت مدل فارسی (حدود ۳۰MB، فقط Wi‑Fi)</button>
 </div>
 <div class="translator-controls">
   <select class="translator-lang" id="translatorFrom">
@@ -7195,16 +7195,46 @@ async function loadAllUserAudio(){
 
 function initSpeech(){
   initAudioDB().then(()=>loadAllUserAudio()).catch(e=>console.warn('AudioDB init:',e));
-  loadTTSVoices();
-  if('speechSynthesis' in window){
-    window.speechSynthesis.addEventListener('voiceschanged',loadTTSVoices);
-  }
+  ensureOfflineTtsPanel();
+  setTimeout(updateOfflineTtsStatus,500);
 }
 
-let ttsVoices=[];
-function loadTTSVoices(){
-  if(!('speechSynthesis' in window))return;
-  ttsVoices=window.speechSynthesis.getVoices()||[];
+let nativeSpeechPlugin=null;
+function getNativeSpeechPlugin(){
+  const cap=window.Capacitor;
+  if(!cap)return null;
+  if(cap.Plugins&&cap.Plugins.SimorghSpeech)return cap.Plugins.SimorghSpeech;
+  if(typeof cap.registerPlugin==='function'){
+    try{nativeSpeechPlugin=nativeSpeechPlugin||cap.registerPlugin('SimorghSpeech');return nativeSpeechPlugin;}catch(e){console.warn('Speech plugin registration:',e);}
+  }
+  return null;
+}
+
+function ensureOfflineTtsPanel(){
+  const screen=document.getElementById('proMore');
+  if(!screen||document.getElementById('offlineTtsPanel'))return;
+  const panel=document.createElement('div');
+  panel.className='pro-setting';panel.id='offlineTtsPanel';
+  panel.innerHTML='<div class="si">🔊</div><div><b>موتور گفتار انگلیسی داخلی</b><small id="offlineTtsStatus" aria-live="polite">در حال بررسی موتور آفلاین...</small></div><button class="pro-btn" id="offlineTtsTest">آزمایش صدا</button>';
+  const firstSetting=screen.querySelector('.pro-setting');
+  if(firstSetting)screen.insertBefore(panel,firstSetting);else screen.appendChild(panel);
+  const testButton=document.getElementById('offlineTtsTest');
+  if(testButton)testButton.addEventListener('click',testOfflineVoice);
+}
+
+async function updateOfflineTtsStatus(){
+  ensureOfflineTtsPanel();
+  const label=document.getElementById('offlineTtsStatus');
+  const plugin=getNativeSpeechPlugin();
+  if(!label)return;
+  if(!plugin){label.textContent='صدای داخلی انگلیسی در APK اندروید فعال است؛ پیش‌نمایش مرورگر موتور بومی ندارد.';return;}
+  try{
+    const status=await plugin.getStatus();
+    if(status.ready)label.textContent=`${status.voice||'صدای انگلیسی'} آماده است؛ کاملاً آفلاین`;
+    else if(status.loading)label.textContent=`در حال آماده‌سازی صدای داخلی… ${status.progress||0}%`;
+    else if(status.error)label.textContent='راه‌اندازی صدا ناموفق بود؛ APK را به‌روزرسانی کن.';
+    else label.textContent='مدل انگلیسی داخل APK است؛ در حال آماده‌سازی اولیه و بدون اینترنت.';
+  }catch(error){label.textContent='موتور داخلی در دسترس نیست؛ APK را بررسی یا دوباره نصب کن.';}
 }
 
 // فعال‌سازی AudioContext بعد از اولین تعامل کاربر (الزامی برای پخش فایل صوتی در Android WebView)
@@ -7244,7 +7274,7 @@ function setAudioSourceBadge(source){
   ['sourceBadgeFront','sourceBadgeBack'].forEach(id=>{
     const b=document.getElementById(id);if(!b)return;
     if(source==='user'){b.className='audio-source-badge badge-user';b.textContent='🎤 صدای شما';b.style.display='inline-flex';}
-    else if(source==='tts'){b.className='audio-source-badge badge-tts';b.textContent='🔊 صدای سیستم';b.style.display='inline-flex';}
+    else if(source==='tts'){b.className='audio-source-badge badge-tts';b.textContent='🔊 صدای داخلی';b.style.display='inline-flex';}
     else{b.style.display='none';}
   });
   const uBtnF=document.getElementById('uploadBtnFront');
@@ -7267,33 +7297,42 @@ function speak(text,rate=0.85){
 
   setSpeakBtnLoading(true);
   tryUserAudio(cleanText,wKey,wKeyGlobal,rate,()=>{
-    speakBrowserTTS(cleanText,rate);
+    speakInternalTTS(cleanText,rate);
   });
 }
 
-// پخش صدا با موتور Text-to-Speech خود مرورگر، وقتی فایل صوتی کاربر موجود نیست
-function speakBrowserTTS(text,rate=0.85){
-  if(!('speechSynthesis' in window)){
+// موتور واحد برنامه: Sherpa/Piper انگلیسی، مدل و JNI همراه APK؛ بدون صدای سیستم یا شبکه.
+async function speakInternalTTS(text,rate=0.85){
+  const clean=String(text||'').trim();
+  if(!clean){setSpeakBtnLoading(false);return;}
+  if(/[\u0600-\u06ff\u0750-\u077f\u08a0-\u08ff]/.test(clean)||!/[A-Za-z]/.test(clean)){
     setSpeakBtnLoading(false);setAudioSourceBadge('none');
+    showToast('موتور گفتار داخلی فقط برای متن انگلیسی است.');
+    return;
+  }
+  const plugin=getNativeSpeechPlugin();
+  if(!plugin||typeof plugin.speak!=='function'){
+    setSpeakBtnLoading(false);setAudioSourceBadge('none');
+    showToast('موتور گفتار داخلی در پیش‌نمایش وب فعال نیست؛ APK اندروید را اجرا کن.');
     return;
   }
   try{
-    window.speechSynthesis.cancel();
-    const utter=new SpeechSynthesisUtterance(text);
-    utter.lang='en-US';
-    utter.rate=Math.min(Math.max((rate||0.85),0.5),1.5);
-    utter.pitch=1;utter.volume=1;
-    if(!ttsVoices||ttsVoices.length===0)loadTTSVoices();
-    const enVoice=ttsVoices.find(v=>v.lang&&v.lang.toLowerCase().startsWith('en-us'))||ttsVoices.find(v=>v.lang&&v.lang.toLowerCase().startsWith('en'));
-    if(enVoice)utter.voice=enVoice;
-    utter.onstart=()=>{setAudioSourceBadge('tts');setSpeakBtnLoading(false);};
-    utter.onend=()=>{setSpeakBtnLoading(false);};
-    utter.onerror=()=>{setSpeakBtnLoading(false);setAudioSourceBadge('none');};
-    window.speechSynthesis.speak(utter);
-    setTimeout(()=>{setSpeakBtnLoading(false);},600);
+    updateOfflineTtsStatus();
+    const result=await plugin.speak({text:clean,lang:'en-US',rate:Math.min(Math.max(Number(rate)||0.85,0.70),1.20)});
+    setSpeakBtnLoading(false);
+    if(!result||!result.cancelled)setAudioSourceBadge('tts');
+    updateOfflineTtsStatus();
   }catch(e){
     setSpeakBtnLoading(false);setAudioSourceBadge('none');
+    const message=String(e&&e.message||e||'');
+    if(message.includes('english_only')||message.includes('no_english_text'))showToast('موتور گفتار داخلی فقط متن انگلیسی را می‌خواند.');
+    else showToast('موتور گفتار آفلاین آماده نیست؛ APK را به‌روزرسانی یا دوباره نصب کن.');
+    updateOfflineTtsStatus();
   }
+}
+
+function testOfflineVoice(){
+  speakInternalTTS('Hello! Let us practice English together.',0.85);
 }
 
 // تنها منبع صدا: فایل آپلودی/ضبط‌شده توسط کاربر
@@ -8595,11 +8634,11 @@ function buildTranslationLesson(text,result,from,to){
   if(!text||!result){box.innerHTML='';box.style.display='none';return;}
   const src=escapeHtml(text),dst=escapeHtml(result);
   box.style.display='block';
-  box.innerHTML=`<div class="translator-lesson-title">🎓 یادگیری از همین جمله</div><div class="translator-lesson-row"><span>جمله</span><b>${src}</b></div><div class="translator-lesson-row"><span>ترجمه طبیعی</span><b>${dst}</b></div><div class="translator-lesson-hint">💡 برنامه ابتدا عبارت‌ها و ساختار جمله را تشخیص می‌دهد و بعد واژه‌ها را ترجمه می‌کند؛ بنابراین ترتیب فارسی مستقیماً به انگلیسی کپی نمی‌شود.</div>`;
+  box.innerHTML=`<div class="translator-lesson-title">🎓 یادگیری از همین جمله</div><div class="translator-lesson-row"><span>جمله</span><b>${src}</b></div><div class="translator-lesson-row"><span>ترجمه</span><b>${dst}</b></div><div class="translator-lesson-hint">💡 جمله با مدل ترجمهٔ روی دستگاه پردازش می‌شود؛ متن برای ترجمه به سرور ارسال نمی‌شود.</div>`;
 }
 
 function getTranslationHistory(){
-  try{return JSON.parse(localStorage.getItem(TRANSLATOR_HISTORY_KEY)||'[]')}catch(e){return []}
+  try{return JSON.parse(localStorage.getItem(TRANSLATOR_HISTORY_KEY)||'[]').filter(x=>translationOutputMatchesTarget(x.dst,x.to))}catch(e){return []}
 }
 function saveTranslationHistory(src,dst,from,to){
   if(!src||!dst)return;
@@ -8639,36 +8678,32 @@ function showTranslator(){
   document.getElementById('sidebarOverlay')?.classList.remove('show');
   document.getElementById('menuBtn')?.classList.remove('active');
 }
-function detectTranslatorEngine(){
-  if(window.AndroidTranslator&&typeof window.AndroidTranslator.refreshStatus==='function'){
-    setTranslatorStatus('در حال بررسی مدل ترجمه روی گوشی...','busy');
-    try{window.AndroidTranslator.refreshStatus();return;}catch(e){}
+let nativeTranslationPlugin=null;
+function getNativeTranslationPlugin(){
+  const cap=window.Capacitor;
+  if(!cap)return null;
+  if(cap.Plugins&&cap.Plugins.SimorghTranslation)return cap.Plugins.SimorghTranslation;
+  if(typeof cap.registerPlugin==='function'){
+    try{nativeTranslationPlugin=nativeTranslationPlugin||cap.registerPlugin('SimorghTranslation');return nativeTranslationPlugin;}catch(e){console.warn('Translation plugin registration:',e);}
   }
-  if(window.AndroidTranslator&&typeof window.AndroidTranslator.isReady==='function'){
-    try{
-      if(window.AndroidTranslator.isReady()){
-        setTranslatorStatus('موتور ترجمهٔ آفلاین آماده است؛ ترجمه بدون اینترنت انجام می‌شود','ready');
-      }else{
-        setTranslatorStatus('مدل ترجمه روی گوشی نصب نیست؛ برای فعال‌سازی یک‌بار اینترنت لازم است','');
-      }
-      return;
-    }catch(e){}
-  }
-  setTranslatorStatus('این نسخه در مرورگر مستقل موتور ترجمهٔ آفلاین ندارد؛ APK باید نصب شده باشد','');
+  return null;
 }
-
-function nativeTranslatorStatus(message,ready,error){
-  if(error){
-    setTranslatorStatus(message||'دریافت مدل ترجمه ناموفق بود','');
-    return;
-  }
-  if(ready){
-    setTranslatorStatus('مدل ترجمه فارسی آماده است؛ ترجمه کاملاً آفلاین است','ready');
-  }else{
-    setTranslatorStatus(message||'در حال آماده‌سازی موتور ترجمه...','busy');
-  }
+function translationOutputMatchesTarget(result,to){
+  const value=String(result||'').trim();if(!value)return false;
+  const hasFa=/[\u0600-\u06ff\u0750-\u077f\u08a0-\u08ff]/.test(value);
+  const hasLatin=/[A-Za-z]/.test(value);
+  return to==='fa'?(hasFa&&!hasLatin):(hasLatin&&!hasFa);
 }
-window.nativeTranslatorStatus=nativeTranslatorStatus;
+async function detectTranslatorEngine(){
+  const plugin=getNativeTranslationPlugin();
+  if(!plugin){setTranslatorStatus('ترجمهٔ کامل فقط در APK اندروید در دسترس است؛ واژه‌نامهٔ ساده در پیش‌نمایش فعال است.','');return;}
+  setTranslatorStatus('در حال بررسی مدل ترجمهٔ روی دستگاه...','busy');
+  try{
+    const status=await plugin.getStatus();
+    if(status.ready)setTranslatorStatus('مدل فارسی آماده است؛ هر دو جهت فارسی ↔ انگلیسی روی دستگاه ترجمه می‌شوند.','ready');
+    else setTranslatorStatus('برای ترجمهٔ جمله‌های آزاد، مدل فارسی را یک‌بار با دکمهٔ زیر و روی Wi‑Fi دریافت کن.','');
+  }catch(error){setTranslatorStatus('سرویس ML Kit در این دستگاه در دسترس نیست؛ Google Play Services را بررسی کن.','');}
+}
 
 function swapTranslatorLanguages(){
   const f=document.getElementById('translatorFrom'),t=document.getElementById('translatorTo');
@@ -8683,46 +8718,30 @@ async function copyTranslation(){
   catch(e){showToast('⚠️ کپی خودکار در این دستگاه در دسترس نیست');}
 }
 function speakTranslation(){
-  if(!translatorLastResult||!('speechSynthesis' in window))return;
-  const lang=document.getElementById('translatorTo').value==='fa'?'fa-IR':'en-US';
-  const u=new SpeechSynthesisUtterance(translatorLastResult);u.lang=lang;speechSynthesis.cancel();speechSynthesis.speak(u);
+  if(!translatorLastResult)return;
+  speak(translatorLastResult,0.85);
 }
 
 function lookupLocalTranslation(text,from,to){
   const key=normalizeTranslatorText(text);
   if(!key)return '';
   const exact=OFFLINE_TRANSLATION_PHRASES[from+'>'+key];
-  if(exact)return exact;
-  if(from==='fa'&&to==='en')return offlineFaToEn(text);
-  if(from==='en'&&to==='fa')return offlineEnToFa(text);
+  if(exact)return translationOutputMatchesTarget(exact,to)?exact:'';
+  const single=key.replace(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu,'');
+  if(!single||/\s/.test(single))return '';
   const dict=getTranslatorDictionary();
-  return from==='fa'?translateFaWords(text,dict):translateEnWords(text,dict);
+  const translated=dict[from+'>'+single]||'';
+  return translationOutputMatchesTarget(translated,to)?translated:'';
 }
 
-function translateWithNativeEngine(text,from,to){
-  return new Promise((resolve,reject)=>{
-    if(!window.AndroidTranslator||typeof window.AndroidTranslator.translateAsync!=='function'){
-      reject(new Error('native-engine-missing'));return;
-    }
-    const id='tr_'+Date.now()+'_'+Math.random().toString(36).slice(2);
-    window.__translatorCallbacks=window.__translatorCallbacks||{};
-    const timer=setTimeout(()=>{
-      delete window.__translatorCallbacks[id];
-      reject(new Error('translation-timeout'));
-    },30000);
-    window.__translatorCallbacks[id]=(result,error)=>{
-      clearTimeout(timer);delete window.__translatorCallbacks[id];
-      if(error)reject(new Error(error));else resolve(result||'');
-    };
-    try{window.AndroidTranslator.translateAsync(text,from,to,id);}catch(e){
-      clearTimeout(timer);delete window.__translatorCallbacks[id];reject(e);
-    }
-  });
+async function translateWithNativeEngine(text,from,to){
+  const plugin=getNativeTranslationPlugin();
+  if(!plugin)throw new Error('native-engine-missing');
+  const status=await plugin.getStatus();
+  if(!status.ready)throw new Error('persian-model-not-downloaded');
+  const response=await plugin.translate({text,from,to});
+  return response&&response.text||'';
 }
-window.__nativeTranslatorCallback=function(id,result,error){
-  const cb=window.__translatorCallbacks&&window.__translatorCallbacks[id];
-  if(cb)cb(result,error||'');
-};
 
 async function translateText(){
   const input=document.getElementById('translatorInput');
@@ -8732,49 +8751,61 @@ async function translateText(){
   setTranslatorStatus('در حال ترجمه روی دستگاه...','busy');
   setTranslatorOutput('');
 
-  let result='';
+  let result=lookupLocalTranslation(text,from,to);
+  if(result&&translationOutputMatchesTarget(result,to)){
+    setTranslatorOutput(result);buildTranslationLesson(text,result,from,to);saveTranslationHistory(text,result,from,to);
+    setTranslatorStatus('ترجمهٔ عبارت از واژه‌نامهٔ داخلی انجام شد','ready');
+    return;
+  }
   try{
-    // برای فارسی، ابتدا موتور جملهٔ محلی را امتحان می‌کنیم تا واژه‌های ناشناخته
-    // هرگز به‌صورت مخلوط فارسی/انگلیسی در خروجی رها نشوند.
-    result=lookupLocalTranslation(text,from,to);
-    if(result && !(from==='fa' && /[\u0600-\u06ff]/.test(result))){
-      setTranslatorOutput(result);buildTranslationLesson(text,result,from,to);saveTranslationHistory(text,result,from,to);
-      setTranslatorStatus('ترجمه طبیعی با موتور جملهٔ آفلاین انجام شد','ready');
-      return;
-    }
-    if(window.AndroidTranslator&&typeof window.AndroidTranslator.translateAsync==='function'){
-      result=await translateWithNativeEngine(text,from,to);
-    }
-    if(result){
-      setTranslatorOutput(result);buildTranslationLesson(text,result,from,to);saveTranslationHistory(text,result,from,to);
-      setTranslatorStatus('ترجمه با موتور آفلاین روی گوشی انجام شد','ready');
-      return;
-    }
-    result=lookupLocalTranslation(text,from,to);
-    if(result){
-      setTranslatorOutput(result);buildTranslationLesson(text,result,from,to);saveTranslationHistory(text,result,from,to);
-      setTranslatorStatus('ترجمه طبیعی با موتور جملهٔ آفلاین انجام شد','ready');
-      return;
-    }
-    throw new Error('empty');
+    result=await translateWithNativeEngine(text,from,to);
+    if(!translationOutputMatchesTarget(result,to))throw new Error('mixed_or_wrong_language_output');
+    setTranslatorOutput(result);buildTranslationLesson(text,result,from,to);saveTranslationHistory(text,result,from,to);
+    setTranslatorStatus('ترجمه با مدل روی دستگاه انجام شد؛ متن به سرور ارسال نشد','ready');
   }
   catch(e){
     if(e&&e.message==='native-engine-missing'){
-      setTranslatorStatus('موتور ترجمه فقط داخل APK فعال است','');
-      setTranslatorOutput('این فایل HTML به‌تنهایی موتور ترجمه ندارد. APK این پروژه موتور ترجمهٔ آفلاین را در خود دارد.');
+      setTranslatorStatus('مدل کامل فقط در APK اندروید در دسترس است','');
+      setTranslatorOutput('برای جلوگیری از ترجمهٔ ناقص یا مخلوط، این جمله در پیش‌نمایش واژه‌نامه‌ای ترجمه نشد. در APK مدل فارسی را دریافت کن.');
+    }else if(e&&e.message==='persian-model-not-downloaded'){
+      setTranslatorStatus('مدل فارسی هنوز دریافت نشده است','');
+      setTranslatorOutput('این جمله در واژه‌نامهٔ محدود نبود؛ دکمهٔ «دریافت مدل فارسی» را بزن و پس از تأیید، مدل را روی Wi‑Fi دریافت کن.');
+    }else if(e&&e.message==='mixed_or_wrong_language_output'){
+      setTranslatorStatus('خروجی مدل با زبان مقصد سازگار نبود','');
+      setTranslatorOutput('برای جلوگیری از نمایش ترجمهٔ مخلوط یا ناقص، این نتیجه نشان داده نشد. جمله را کوتاه‌تر یا با نشانه‌گذاری روشن‌تر وارد کن.');
     }else{
-      setTranslatorStatus('مدل ترجمه آماده نیست؛ ابتدا دانلود مدل‌ها را کامل کن','');
-      setTranslatorOutput('ابتدا یک‌بار به اینترنت وصل شو تا مدل‌های فارسی و انگلیسی روی گوشی نصب شوند. بعد از نصب، ترجمه بدون اینترنت کار می‌کند.');
+      setTranslatorStatus('ترجمه انجام نشد؛ اتصال/سرویس مدل را بررسی کن','');
+      setTranslatorOutput('ترجمهٔ این جمله کامل نشد. متن ترکیبی نمایش داده نشده است؛ وضعیت مدل را بررسی و دوباره تلاش کن.');
     }
   }
 }
 
 function downloadTranslatorModels(){
-  if(window.AndroidTranslator&&typeof window.AndroidTranslator.prepareModels==='function'){
-    setTranslatorStatus('در حال دریافت مدل‌های ترجمه...','busy');
-    window.AndroidTranslator.prepareModels();
-  }else{
-    setTranslatorStatus('این قابلیت فقط در APK فعال است','');
+  const plugin=getNativeTranslationPlugin();
+  if(!plugin){setTranslatorStatus('دریافت مدل فقط در APK اندروید فعال است','');return;}
+  document.getElementById('modalContent').innerHTML='<div class="about-content"><div style="font-size:42px;text-align:center">🌐</div><h2 style="text-align:center">دریافت مدل ترجمهٔ فارسی</h2><p style="line-height:1.9">فقط مدل فارسی با حجم تقریبی ۳۰MB دریافت می‌شود؛ انگلیسی از قبل در ML Kit موجود است. دانلود فقط روی Wi‑Fi انجام می‌شود و فقط پس از تأیید تو شروع خواهد شد.</p><p style="line-height:1.9">بعد از نصب، متن برای ترجمه روی دستگاه پردازش می‌شود و به Google فرستاده نمی‌شود. طبق شرایط ML Kit، خود SDK ممکن است گاهی برای آمار استفاده یا به‌روزرسانی به سرورهای Google وصل شود.</p><button class="btn btn-primary" style="width:100%;margin-top:12px" onclick="confirmTranslatorModelDownload()">تأیید و دریافت روی Wi‑Fi</button><button class="btn" style="width:100%;margin-top:8px" onclick="closeModal()">فعلاً نه</button></div>';
+  document.getElementById('modalOverlay').classList.add('show');
+}
+
+async function confirmTranslatorModelDownload(){
+  closeModal();
+  const plugin=getNativeTranslationPlugin();
+  if(!plugin){setTranslatorStatus('دریافت مدل فقط در APK اندروید فعال است','');return;}
+  setTranslatorStatus('در حال دریافت مدل فارسی روی Wi‑Fi؛ لطفاً برنامه را باز نگه دار...','busy');
+  setTranslatorOutput('');
+  try{
+    await plugin.downloadModels();
+    setTranslatorStatus('مدل فارسی نصب شد؛ ترجمهٔ جمله‌ها اکنون بدون اینترنت انجام می‌شود','ready');
+    showToast('✅ مدل فارسی نصب شد؛ مترجم آفلاین آماده است.');
+  }catch(error){
+    const message=String(error&&error.message||error||'');
+    if(message.toLowerCase().includes('wifi')||message.toLowerCase().includes('network')){
+      setTranslatorStatus('برای دریافت مدل، Wi‑Fi را روشن کن و دوباره تلاش کن','');
+      showToast('دانلود مدل فقط روی Wi‑Fi انجام می‌شود.');
+    }else{
+      setTranslatorStatus('دریافت مدل ناموفق بود؛ سرویس Google و Wi‑Fi را بررسی کن','');
+      showToast('مدل دریافت نشد؛ پس از بررسی Wi‑Fi دوباره تلاش کن.');
+    }
   }
 }
 
