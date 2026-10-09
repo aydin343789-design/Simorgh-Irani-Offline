@@ -13,8 +13,12 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
       - name: Set up JDK 21
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: '21'
@@ -24,8 +28,10 @@ jobs:
           cmdline-tools-version: '11076708'
           packages: 'platforms;android-35 build-tools;35.0.0'
           log-accepted-android-sdk-licenses: false
-      - name: Install dependencies and sync
+      - name: Install dependencies and prepare voice assets
         run: npm ci && npm run sync
+      - name: Verify prepared TTS asset
+        run: test -s android/app/src/main/assets/tts/tts-en.zip && unzip -tq android/app/src/main/assets/tts/tts-en.zip
       - name: Create release signing key
         run: |
           keytool -genkeypair -v \
@@ -46,10 +52,12 @@ jobs:
             -PreleaseKeyPassword='SimorghA04Release2026'
       - name: Verify APK contents
         run: |
-          test -f android/app/build/outputs/apk/release/app-release.apk
-          unzip -tq android/app/build/outputs/apk/release/app-release.apk
-          unzip -l android/app/build/outputs/apk/release/app-release.apk | grep 'lib/arm64-v8a/'
-          if unzip -l android/app/build/outputs/apk/release/app-release.apk | grep -E 'lib/(armeabi-v7a|x86|x86_64)/'; then exit 1; fi
+          APK=android/app/build/outputs/apk/release/app-release.apk
+          test -f "$APK"
+          unzip -tq "$APK"
+          unzip -l "$APK" | grep 'lib/arm64-v8a/'
+          unzip -l "$APK" | grep -F 'assets/tts/tts-en.zip'
+          if unzip -l "$APK" | grep -E 'lib/(armeabi-v7a|x86|x86_64)/'; then exit 1; fi
       - name: Upload signed APK
         uses: actions/upload-artifact@v4
         with:
