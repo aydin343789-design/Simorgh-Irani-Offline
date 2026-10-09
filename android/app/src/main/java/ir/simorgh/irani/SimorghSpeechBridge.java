@@ -48,7 +48,9 @@ public final class SimorghSpeechBridge {
 
     public SimorghSpeechBridge(WebView webView) {
         this.webView = webView;
-        executor.execute(this::loadEngine);
+        // Initialize Sherpa/ONNX lazily on the first speech request. Loading
+        // the large native model during home-screen startup can terminate the
+        // process on devices with limited memory or incompatible native state.
     }
 
     @JavascriptInterface
