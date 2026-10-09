@@ -1,24 +1,28 @@
-# اعلان اجزای ثالث
+# Third-party notices
 
-این سند فقط دربارهٔ اجزای شخص ثالث است و برای کل برنامه مجوزی تعیین نمی‌کند.
+## Sherpa-ONNX
 
-## صدای انگلیسی Amy و مدل Piper
+The embedded native inference runtime and Java bindings are from Sherpa-ONNX by the k2-fsa project. Source and license information:
 
-- مدل: صدای تک‌گویندهٔ آمریکایی انگلیسی **Amy**, کیفیت medium، نرخ 22.05 kHz؛ مدل ONNX به‌صورت INT8 quantize و در بستهٔ TTS برنامه قرار می‌گیرد.
-- مدل و کارت مدل از انتشار رسمی Sherpa-ONNX با نام `vits-piper-en_US-amy-medium-int8` گرفته می‌شوند. کارت مدل به مجموعهٔ صداهای [Mycroft Mimic3 Voices](https://github.com/MycroftAI/mimic3-voices) ارجاع می‌دهد.
-- مخزن صداهای Mycroft تحت [Creative Commons Attribution-ShareAlike 4.0 International (CC BY-SA 4.0)](https://creativecommons.org/licenses/by-sa/4.0/) است. فایل ONNX در آرشیو رسمی Sherpa-ONNX از پیش به INT8 quantize شده و در برنامه بدون تغییر مدل بسته‌بندی می‌شود. متن کامل مجوز در [`licenses/MIMIC3-VOICES-LICENSE.txt`](./licenses/MIMIC3-VOICES-LICENSE.txt) و داخل بستهٔ TTS موجود است.
-- منبع آرشیو: [Sherpa-ONNX TTS models release](https://github.com/k2-fsa/sherpa-onnx/releases/tag/tts-models)، فایل `vits-piper-en_US-amy-medium-int8.tar.bz2`.
-- مدل ONNX: `en_US-amy-medium.onnx`; SHA-256: `e93cf3361c5561b9fedcec20b26ae5ecd068172e514740562f1263be65b3848f`.
-- کارت مدل و این اعلان در بستهٔ صوتی قرار می‌گیرند. متن کامل مجوز CC BY-SA 4.0 در پیوند بالا در دسترس است.
+- Source: https://github.com/k2-fsa/sherpa-onnx
+- License: Apache License 2.0
 
-## موتور Sherpa-ONNX
+The corresponding source files and native libraries are kept under `android/app/src/main/java/com/k2fsa/sherpa/onnx/` and `android/app/src/main/jniLibs/arm64-v8a/`.
 
-- کد Java و runtime بومی Sherpa-ONNX در پروژه از [k2-fsa/sherpa-onnx](https://github.com/k2-fsa/sherpa-onnx) گرفته شده است.
-- مجوز: [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0). اعلان و شروط مجوز را هنگام توزیع حفظ کنید.
+## Piper Amy Low voice
 
-## ترجمهٔ Google ML Kit
+The English female voice is based on the Piper voice published at:
 
-- وابستگی Android: `com.google.mlkit:translate:17.0.3`.
-- مستندات: [Translate text with ML Kit on Android](https://developers.google.com/ml-kit/language/translation/android) و [راهنمای API ترجمه](https://developers.google.com/ml-kit/language/translation).
-- شرایط: [ML Kit Terms of Service](https://developers.google.com/ml-kit/terms). پردازش ورودی و خروجی ترجمه به‌صورت on-device است؛ شرایط Google همچنین می‌گوید SDK ممکن است گاهی برای معیارهای کارایی/استفاده، رفع اشکال و اطلاعات/به‌روزرسانی مدل به سرورهای Google وصل شود. بنابراین اپ پردازش متن را به سرور نمی‌فرستد، ولی نمی‌تواند رفتار شبکه‌ای دوره‌ای خود SDK را نفی کند.
-- تنها مدل زبانی دانلودی این جفت، مدل فارسی است (حدود ۳۰MB طبق مستندات Google؛ انگلیسی داخلی است). دانلود از داخل اپ فقط بعد از تأیید کاربر و با شرط Wi‑Fi آغاز می‌شود؛ پس از نصب، ترجمه روی دستگاه کار می‌کند.
+- Model source: https://huggingface.co/rhasspy/piper-voices/tree/main/en/en_US/amy/low
+- Samples and voice catalog: https://rhasspy.github.io/piper-samples/
+
+The model is converted for Sherpa-ONNX, quantized to int8, and packaged as `android/app/src/main/assets/tts/tts-en.zip`. Preserve the upstream model metadata and license when redistributing the APK.
+
+## eSpeak phonemizer data
+
+The Piper/Sherpa voice uses the shared eSpeak NG data archive for English phonemization:
+
+- Source: https://github.com/k2-fsa/sherpa-onnx/releases/tag/tts-models
+- Upstream eSpeak NG project: https://github.com/espeak-ng/espeak-ng
+
+The eSpeak data is bundled inside the voice archive and is used only by the embedded native speech path.

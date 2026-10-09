@@ -20,14 +20,15 @@
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
 
-# Preserve Capacitor's annotation/reflection-based native plugin registration.
+# Preserve the annotation and the narrow JavaScript bridge under R8.
 -keepattributes RuntimeVisibleAnnotations,RuntimeInvisibleAnnotations,AnnotationDefault
--keep @com.getcapacitor.annotation.CapacitorPlugin class ir.simorgh.irani.SimorghSpeechPlugin { *; }
--keep @com.getcapacitor.annotation.CapacitorPlugin class ir.simorgh.irani.SimorghTranslationPlugin { *; }
+-keep class ir.simorgh.irani.SimorghTranslatorBridge { *; }
+-keep class ir.simorgh.irani.SimorghSpeechBridge { *; }
 -keep class ir.simorgh.irani.MainActivity { *; }
-
-# Sherpa-ONNX uses JNI and Java reflection for model configuration.
--keep class com.k2fsa.sherpa.onnx.** { *; }
--keepclasseswithmembernames,includedescriptorclasses class * {
-    native <methods>;
-}
+-keep class com.k2fsa.sherpa.onnx.OfflineTts { *; }
+-keep class com.k2fsa.sherpa.onnx.OfflineTtsConfig { *; }
+-keep class com.k2fsa.sherpa.onnx.OfflineTtsModelConfig { *; }
+-keep class com.k2fsa.sherpa.onnx.OfflineTtsVitsModelConfig { *; }
+-keep class com.k2fsa.sherpa.onnx.GeneratedAudio { *; }
+-keep class com.k2fsa.sherpa.onnx.LibraryLoader { *; }
+-keep class com.k2fsa.sherpa.onnx.LibraryUtils { *; }

@@ -1,39 +1,57 @@
-# آزمون پذیرش مترجم و گفتار آفلاین
+# Offline Language Features — Acceptance Tests
 
-## ساخت و نصب
+## Preconditions
 
-1. در CI یا محیط Android SDK اجرا کن: `npm ci && npm run sync` و سپس `cd android && ./gradlew assembleDebug`.
-2. در APK بررسی کن `assets/tts/tts-en.zip` وجود دارد، مدل انگلیسی Amy و فایل‌های eSpeak داخل آن هستند و JNI های `arm64-v8a` همراه برنامه‌اند.
-3. نصب و اجرای اولیه باید بدون درخواست شبکه برای TTS انجام شود؛ بستهٔ صوتی داخل APK است.
+1. Install the APK on an Android arm64 device with current Google Play services.
+2. Confirm either Wi‑Fi or mobile data is available for the one-time ML Kit translation-model download.
+3. No Android TTS voice or browser voice setting is required for the English speech tests.
 
-## موتور گفتار داخلی انگلیسی
+## Translator — first-time setup
 
-1. در نسخهٔ Android، از بخش «بیشتر» وضعیت «موتور گفتار انگلیسی داخلی» را بازبینی و «آزمایش صدا» را اجرا کن.
-2. واژهٔ انگلیسی فلش‌کارت، جملهٔ نمونه، جمله‌های مکالمه و بازخوردهای انگلیسی را پخش کن.
-3. تأیید کن که گفتار از مدل Sherpa-ONNX/Piper و PCM محلی پخش می‌شود؛ Text-to-Speech سیستم Android یا `speechSynthesis` مرورگر نباید استفاده شود.
-4. در حالت پرواز همین موارد را تکرار کن؛ گفتار باید همچنان کار کند.
-5. ورودی یا خروجی فارسی را به دکمهٔ گفتار بده؛ چون موتور فارسی ارائه نمی‌شود، برنامه باید پیام روشن بدهد و نباید صدای Android/مرورگر را صدا بزند.
-6. نصب اول را با مدل خراب/فایل asset حذف‌شده شبیه‌سازی کن؛ وضعیت و خطا باید قابل‌فهم باشد و برنامه نباید crash کند.
-7. آغاز گفتار جدید و دکمهٔ توقف باید پخش قبلی را قطع کنند.
+1. Open **مترجم فارسی ↔ انگلیسی**.
+2. Verify the initial status states that translation models are not installed.
+3. Tap **دریافت مدل‌های آفلاین**.
+4. Confirm the dialog that states the approximate total download size (about 60 MB) and permits Wi‑Fi or mobile data.
+5. Confirm the status changes to ready only after both Persian and English models have downloaded.
+6. Turn off Wi‑Fi and mobile data, then reopen the translator. Its status must still show that on-device translation is ready.
 
-## مترجم ML Kit
+## Translator — offline operation
 
-1. پاک‌کردن دادهٔ برنامه یا نصب تازه: باز کردن مترجم و ترجمهٔ یک جملهٔ آزاد نباید هیچ مدلی را بی‌اجازه دریافت کند.
-2. عبارت‌های محلی شناخته‌شده و یک واژهٔ درس را در هر دو جهت امتحان کن. واژهٔ ناشناخته یا جملهٔ خارج از واژه‌نامه نباید با کلمه‌های زبان مبدأ در خروجی مخلوط شود.
-3. برای جملهٔ آزاد، دکمهٔ «دریافت مدل فارسی» را بزن؛ اول باید پنجرهٔ تأیید با برآورد حدود ۳۰MB، محدودیت Wi‑Fi و توضیح حریم خصوصی دیده شود.
-4. «فعلاً نه» را بزن؛ هیچ دانلودی نباید شروع شود.
-5. بدون Wi‑Fi تأیید کن؛ دانلود نباید از دیتای موبایل انجام شود و باید پیام واضح بدهد.
-6. روی Wi‑Fi دوباره تأیید کن؛ مدل فارسی دریافت شود. انگلیسی مدل دانلودی جداگانه ندارد.
-7. پس از موفقیت، Wi‑Fi و دیتای موبایل را خاموش کن. چند جملهٔ آزاد فارسی→انگلیسی و انگلیسی→فارسی را امتحان کن؛ ترجمه باید روی دستگاه انجام شود.
-8. اگر نتیجهٔ ML Kit زبان مبدأ را حفظ کرد یا خروجی خالی بود، برنامه باید به‌جای متن مخلوط پیام خطا/تلاش مجدد نشان دهد.
-9. اپ را force-stop و دوباره باز کن؛ مدل آماده بماند، وضعیت درست نمایش داده شود و ترجمه در حالت پرواز ادامه یابد.
-10. متن‌هایی با نام خاص لاتین در خروجی فارسی و نام خاص فارسی در خروجی انگلیسی را امتحان کن؛ سیاست فعلی سخت‌گیرانه است و هر خروجی دوخطی/مخلوط را رد می‌کند.
-11. اگر Google Play/ML Kit یا دانلود ناموفق شد، برنامه crash نکند؛ دکمهٔ تلاش مجدد و وضعیت روشن بمانند.
+With Wi‑Fi and mobile data disabled, verify both directions:
 
-## بررسی Android / R8
+| Input | Direction | Expected behavior |
+|---|---|---|
+| `Hello, how are you?` | English → Persian | Complete Persian sentence; no English words leaked into the result |
+| `I love learning English.` | English → Persian | Complete Persian translation |
+| `سلام، حالت چطوره؟` | Persian → English | Complete English sentence |
+| `من عاشق یادگیری زبان انگلیسی هستم.` | Persian → English | Complete English translation |
+| `thank you` | English → Persian | `ممنون` or a natural Persian equivalent |
+| `کرایه ماشین چقدر است؟` | Persian → English | Complete English question |
 
-- هر سه workflow ساخت، یعنی APK عمومی، debug و release arm64، باید موفق شوند.
-- R8 نباید نام کلاس‌ها/متدهای JNI Sherpa یا `@CapacitorPlugin` را حذف کند.
-- APK باید `SimorghSpeech` و `SimorghTranslation` را از Capacitor قابل فراخوانی کند.
-- manifest باید `INTERNET` را فقط برای ML Kit داشته باشد و هیچ سرویس Android TTS یا AndroidTranslator قدیمی ثبت نشده باشد.
-- پیش از انتشار، روی گوشی واقعی arm64، صدای قابل شنیدن، ترجمهٔ دوطرفه، مدل نصب‌شده و رفتار حالت پرواز را بررسی کن؛ build موفق به‌تنهایی آزمون دستگاه واقعی نیست.
+Also verify that copying, local history, restart persistence and the selected result language work as expected.
+
+## Independent English voice
+
+1. Install the APK on a clean device with Android TTS disabled or with no TTS voice installed.
+2. Open an English flashcard and tap the speaker. It must produce the bundled **Piper Amy** female English voice.
+3. Verify that the first run extracts the internal asset and that later runs remain offline.
+4. Disable network access and repeat speech. Playback must still work.
+5. Tap speech twice quickly. The previous `AudioTrack` must stop before the next clip begins.
+6. Open a Persian flashcard or Persian translation result. The app must display that the embedded voice currently supports English only; it must not silently fall back to Android TTS or browser speech.
+7. If a user-uploaded audio file exists for a word, it may play before the embedded voice.
+
+## Behavior before translation models are installed
+
+1. Clear the app’s translation models through Android app data reset, then open the translator without network access.
+2. Test a known phrase such as `hello`; the local phrasebook may answer it.
+3. Test a sentence outside the phrasebook such as `I love learning English.`
+4. The UI must ask the user to download models; it **must not** display a mixed result such as `I Love دارم` as a completed translation.
+
+## Build verification
+
+1. Run `npm ci`, `npm run verify:translator` and `npm run sync`.
+2. Confirm `dist/index.html` and `android/app/src/main/assets/public/index.html` are generated from `www/index.html`.
+3. Build with `cd android && ./gradlew assembleDebug`.
+4. Confirm R8 is enabled for debug and release and only `arm64-v8a` is packaged.
+5. Run `unzip -l app-debug.apk` and verify the APK contains `assets/tts/tts-en.zip` and does not contain `tts-fa.zip`, `speechSynthesis`, or Android TTS code.
+6. Verify the APK contains the Sherpa/ONNX native libraries and the internal voice asset; no network fetch is needed for speech.
