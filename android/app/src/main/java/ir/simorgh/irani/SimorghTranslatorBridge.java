@@ -31,7 +31,9 @@ public final class SimorghTranslatorBridge {
     private static final String PERSIAN = "fa";
     private static final String ENGLISH = "en";
     private static final int MAX_INPUT_LENGTH = 5_000;
-    private static final long MODEL_DOWNLOAD_TIMEOUT_SECONDS = 90L;
+    // Mobile data can take considerably longer than Wi-Fi for the two models.
+    // Keep a finite bound, but do not fail a valid download after 90 seconds.
+    private static final long MODEL_DOWNLOAD_TIMEOUT_SECONDS = 300L;
 
     private final WebView webView;
     private final RemoteModelManager modelManager;
@@ -102,7 +104,7 @@ public final class SimorghTranslatorBridge {
                 return;
             }
             Log.e(TAG, "Translation model download failed: " + downloadError(persianTask, englishTask));
-            emitStatus("دریافت مدل ترجمه در ۹۰ ثانیه کامل نشد: "
+            emitStatus("دریافت مدل ترجمه در ۵ دقیقه کامل نشد: "
                     + downloadError(persianTask, englishTask)
                     + ". اتصال اینترنت، فضای خالی و Google Play services را بررسی کن و دوباره تلاش کن.", false, true);
         });

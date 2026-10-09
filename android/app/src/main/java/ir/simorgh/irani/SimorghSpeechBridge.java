@@ -24,6 +24,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Fully embedded English TTS. It never calls Android TTS or browser speechSynthesis.
@@ -37,8 +39,10 @@ public final class SimorghSpeechBridge {
     private final WebView webView;
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
     private final Object engineLock = new Object();
+    private final AtomicLong speechGeneration = new AtomicLong();
     private volatile OfflineTts engine;
     private volatile AudioTrack activeTrack;
+    private volatile Future<?> pendingSpeech;
     private volatile boolean destroyed;
     private volatile String error = "";
 
@@ -69,7 +73,11 @@ public final class SimorghSpeechBridge {
         }
         final String cleanText = text.trim();
         final float speed = Math.max(0.65f, Math.min((float) rate, 1.35f));
-        executor.execute(() -> {
+        final long generation = speechGeneration.incrementAndGet();
+        Future<?> previous = pendingSpeech;
+        if (previous != null) previous.cancel(true);
+        stopInternal();
+        pendingSpeech = executor.submit(() -> {
             try {
                 loadEngine();
                 OfflineTts current = engine;
@@ -77,11 +85,13 @@ public final class SimorghSpeechBridge {
                     emitCallback(callbackId, false, "embedded_voice_not_ready:" + error);
                     return;
                 }
-                stopInternal();
+                if (generation != speechGeneration.get() || destroyed) return;
                 GeneratedAudio audio = current.generate(cleanText, 0, speed);
+                if (generation != speechGeneration.get() || destroyed) return;
                 play(audio);
-                emitCallback(callbackId, true, "");
+                if (generation == speechGeneration.get()) emitCallback(callbackId, true, "");
             } catch (Throwable failure) {
+                if (generation != speechGeneration.get()) return;
                 error = safeMessage(failure);
                 emitCallback(callbackId, false, "embedded_speech_failed:" + error);
             }
@@ -90,11 +100,15 @@ public final class SimorghSpeechBridge {
 
     @JavascriptInterface
     public void stop() {
+        speechGeneration.incrementAndGet();
+        Future<?> previous = pendingSpeech;
+        if (previous != null) previous.cancel(true);
         stopInternal();
     }
 
     public void destroy() {
         destroyed = true;
+        speechGeneration.incrementAndGet();
         stopInternal();
         executor.shutdownNow();
         synchronized (engineLock) {

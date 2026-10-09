@@ -8826,8 +8826,21 @@ async function translateText(){
   setTranslatorOutput(detail.output);
 }
 function downloadTranslatorModels(){
-  setTranslatorStatus('موتور آفلاین Argos در حال آماده‌سازی است؛ فعلاً ترجمهٔ آنلاین رایگان فعال است','');
-  setTranslatorOutput('برای استفادهٔ معمول، اینترنت را روشن نگه دار و دکمهٔ ترجمه را بزن. نسخهٔ آفلاین مستقل از Google Play services در حال جایگزینی موتور قبلی است.');
+  if(!(window.AndroidTranslator&&typeof window.AndroidTranslator.prepareModels==='function')){
+    setTranslatorStatus('این قابلیت فقط در APK فعال است','');
+    return;
+  }
+  const approved=window.confirm('بستهٔ ترجمهٔ آفلاین فارسی و انگلیسی با هر اینترنت در دسترس، Wi‑Fi یا دیتای همراه، دریافت می‌شود. پس از نصب، ترجمهٔ جمله‌ها بدون اینترنت انجام خواهد شد. ادامه می‌دهی؟');
+  if(!approved){
+    setTranslatorStatus('دریافت بستهٔ آفلاین لغو شد؛ ترجمهٔ آنلاین همچنان فعال است','ready');
+    return;
+  }
+  setTranslatorStatus('در حال دریافت بستهٔ ترجمه با اینترنت موجود...','busy');
+  try{window.AndroidTranslator.prepareModels();}
+  catch(e){
+    const detail=translatorFailureDetails(e);
+    setTranslatorStatus(detail.status,'');
+  }
 }
 
 // ============================================
@@ -9139,6 +9152,10 @@ function proRenderGrammar(){
   const box=$('grammarBox');if(!box)return;
   let idx,t=0;do{idx=Math.floor(Math.random()*GRAM.length);}while(idx===gram.last&&t++<10);
   gram.last=idx;gram.cur=GRAM[idx];gram.opts=shuffle(gram.cur.o);gram.done=false;drawGrammar('');
+  // Grammar used to be silent because this screen never called the shared
+  // speech route. Start after the card is painted so the user hears the
+  // complete sentence instead of waiting behind UI rendering.
+  setTimeout(()=>{if(gram.cur&&!gram.done)speak(gram.cur.q,0.82);},120);
 }
 function drawGrammar(fb,pickedIdx){
   const box=$('grammarBox');if(!box||!gram.cur)return;

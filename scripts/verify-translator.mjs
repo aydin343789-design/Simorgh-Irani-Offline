@@ -14,6 +14,10 @@ const speech = await readFile(
   resolve(root, 'android/app/src/main/java/ir/simorgh/irani/SimorghSpeechBridge.java'),
   'utf8',
 );
+const translator = await readFile(
+  resolve(root, 'android/app/src/main/java/ir/simorgh/irani/SimorghTranslatorBridge.java'),
+  'utf8',
+);
 const gradle = await readFile(resolve(root, 'android/app/build.gradle'), 'utf8');
 
 const checks = [
@@ -36,6 +40,10 @@ const checks = [
   ['online-first translation', html.indexOf('await translateOnlineMyMemory') < html.indexOf('await translateWithNativeEngine')],
   ['online fallback to offline', html.includes("onlineError||nativeError")],
   ['no Maven Sherpa dependency', !gradle.includes('sherpa-onnx')],
+  ['grammar speech route', html.includes('if(gram.cur&&!gram.done)speak(gram.cur.q,0.82)')],
+  ['speech stale-request cancellation', speech.includes('speechGeneration.incrementAndGet()') && speech.includes('previous.cancel(true)')],
+  ['mobile-data model download', translator.includes('new DownloadConditions.Builder().build()') && !translator.includes('.requireWifi()')],
+  ['mobile-data timeout allowance', translator.includes('MODEL_DOWNLOAD_TIMEOUT_SECONDS = 300L')],
 ];
 
 const failed = checks.filter(([, passed]) => !passed).map(([name]) => name);
