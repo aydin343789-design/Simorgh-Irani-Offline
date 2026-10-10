@@ -19,6 +19,8 @@ const translator = await readFile(
   'utf8',
 );
 const gradle = await readFile(resolve(root, 'android/app/build.gradle'), 'utf8');
+const scenarioSource = html.match(/const scenarios=(.*?);\s*function lineText/s)?.[1] || '';
+const scenarios = scenarioSource ? JSON.parse(scenarioSource) : [];
 
 const checks = [
   ['ML Kit dependency', gradle.includes("com.google.mlkit:translate:17.0.3")],
@@ -45,6 +47,8 @@ const checks = [
   ['lazy speech startup', !speech.includes('executor.execute(this::loadEngine)') && speech.includes('lazily on the first speech request')],
   ['mobile-data model download', translator.includes('new DownloadConditions.Builder().build()') && !translator.includes('.requireWifi()')],
   ['mobile-data timeout allowance', translator.includes('MODEL_DOWNLOAD_TIMEOUT_SECONDS = 300L')],
+  ['50 conversation lessons', scenarios.length === 50 && scenarios.every((item) => Array.isArray(item[2]) && item[2].length > 0)],
+  ['conversation speech sequencing', html.includes('function speakConversationLine') && html.includes('speechDoneCallbacks') && html.includes('const run=pro.conversationRun')],
 ];
 
 const failed = checks.filter(([, passed]) => !passed).map(([name]) => name);
