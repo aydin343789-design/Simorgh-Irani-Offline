@@ -64,6 +64,12 @@ public final class SimorghSpeechBridge {
     }
 
     @JavascriptInterface
+    public void warmUp() {
+        if (destroyed || engine != null) return;
+        executor.submit(this::loadEngine);
+    }
+
+    @JavascriptInterface
     public void speak(String text, String language, double rate, String callbackId) {
         if (destroyed || text == null || text.trim().isEmpty()) {
             emitCallback(callbackId, false, "empty_text");

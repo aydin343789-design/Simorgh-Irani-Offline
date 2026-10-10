@@ -33,14 +33,14 @@ const checks = [
   ['language-based model detection', bridge.includes('model.getLanguage()')],
   ['bounded model download', bridge.includes('Tasks.withTimeout') && bridge.includes('MODEL_DOWNLOAD_TIMEOUT_SECONDS')],
   ['native result callback', bridge.includes('window.__nativeTranslatorCallback')],
-  ['online privacy disclosure', html.includes('ترجمهٔ آنلاین رایگان') && html.includes('سرویس آنلاین')],
+  ['online privacy disclosure', html.includes('سرویس آنلاین') && html.includes('برای ترجمهٔ آفلاین')],
   ['on-device fallback before phrasebook', html.indexOf('await translateWithNativeEngine') < html.indexOf('const localResult=lookupLocalTranslation')],
   ['mixed-result guard', html.includes('function isCompleteLocalTranslation')],
   ['free online translation API', html.includes('api.mymemory.translated.net/get') && html.includes('translateOnlineMyMemory')],
   ['online-first translation', html.indexOf('await translateOnlineMyMemory') < html.indexOf('await translateWithNativeEngine')],
   ['online fallback to offline', html.includes("onlineError||nativeError")],
   ['no Maven Sherpa dependency', !gradle.includes('sherpa-onnx')],
-  ['grammar speech route', html.includes('if(gram.cur&&!gram.done)speak(gram.cur.q,0.82)')],
+  ['grammar speech route', html.includes('if(gram.cur&&!gram.done)speak(gram.cur.q,0.86)') && html.includes("},2000);")],
   ['speech stale-request cancellation', speech.includes('speechGeneration.incrementAndGet()') && speech.includes('previous.cancel(true)')],
   ['lazy speech startup', !speech.includes('executor.execute(this::loadEngine)') && speech.includes('lazily on the first speech request')],
   ['mobile-data model download', translator.includes('new DownloadConditions.Builder().build()') && !translator.includes('.requireWifi()')],
@@ -54,3 +54,7 @@ for (const [name, passed] of checks) {
 if (failed.length) {
   throw new Error(`Translator integrity check failed: ${failed.join(', ')}`);
 }
+
+// New behavior checks
+if (!html.includes('warmUpSpeechEngine') || !speech.includes('public void warmUp()')) throw new Error('Speech warm-up check failed');
+if (html.includes('saveTranslationHistory(text,result') || html.includes('buildTranslationLesson(text,result')) throw new Error('Translator history/lesson removal check failed');
